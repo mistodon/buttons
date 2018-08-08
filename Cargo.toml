@@ -1,0 +1,6 @@
+[package]
+name = "buttons"
+version = "0.1.0"
+authors = ["Claire Harris <wishing.engine@gmail.com>"]
+
+[dependencies]
