@@ -7,7 +7,7 @@ pub struct Modifiers {
 }
 
 #[derive(Debug, Clone)]
-pub struct Keyboard<Key, Mods=Modifiers>
+pub struct Keyboard<Key, Mods = Modifiers>
 where
     Key: Copy + PartialEq,
     Mods: Copy + Default,
@@ -53,15 +53,15 @@ where
     }
 
     pub fn down(&self, key: Key) -> bool {
-        self.keys_down.iter().find(|&&k| k == key).is_some()
+        self.keys_down.iter().any(|&k| k == key)
     }
 
     pub fn pressed(&self, key: Key) -> bool {
-        self.keys_pressed.iter().find(|&&k| k == key).is_some()
+        self.keys_pressed.iter().any(|&k| k == key)
     }
 
     pub fn released(&self, key: Key) -> bool {
-        self.keys_released.iter().find(|&&k| k == key).is_some()
+        self.keys_released.iter().any(|&k| k == key)
     }
 }
 
@@ -79,14 +79,20 @@ where
     Mods: Copy + Default,
 {
     pub fn press(&mut self, key: Key) -> &mut Self {
-        self.keyboard.keys_down.push(key);
-        self.keyboard.keys_pressed.push(key);
+        if !self.keyboard.down(key) {
+            self.keyboard.keys_down.push(key);
+        }
+        if !self.keyboard.pressed(key) {
+            self.keyboard.keys_pressed.push(key);
+        }
         self
     }
 
     pub fn release(&mut self, key: Key) -> &mut Self {
         self.keyboard.keys_down.retain(|&k| k != key);
-        self.keyboard.keys_released.push(key);
+        if !self.keyboard.released(key) {
+            self.keyboard.keys_released.push(key);
+        }
         self
     }
 

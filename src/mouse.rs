@@ -4,7 +4,7 @@ use std::ops::Add;
 pub struct Mouse<Button, Coord>
 where
     Button: Copy + PartialEq,
-    Coord: Copy + Default + Add<Output=Coord>,
+    Coord: Copy + Default + Add<Output = Coord>,
 {
     position: [Coord; 2],
     buttons_down: Vec<Button>,
@@ -15,7 +15,7 @@ where
 impl<Button, Coord> Default for Mouse<Button, Coord>
 where
     Button: Copy + PartialEq,
-    Coord: Copy + Default + Add<Output=Coord>,
+    Coord: Copy + Default + Add<Output = Coord>,
 {
     fn default() -> Self {
         Mouse {
@@ -30,7 +30,7 @@ where
 impl<Button, Coord> Mouse<Button, Coord>
 where
     Button: Copy + PartialEq,
-    Coord: Copy + Default + Add<Output=Coord>,
+    Coord: Copy + Default + Add<Output = Coord>,
 {
     pub fn new() -> Self {
         Self::default()
@@ -54,22 +54,22 @@ where
     }
 
     pub fn down(&self, button: Button) -> bool {
-        self.buttons_down.iter().find(|&&b| b == button).is_some()
+        self.buttons_down.iter().any(|&b| b == button)
     }
 
     pub fn pressed(&self, button: Button) -> bool {
-        self.buttons_pressed.iter().find(|&&b| b == button).is_some()
+        self.buttons_pressed.iter().any(|&b| b == button)
     }
 
     pub fn released(&self, button: Button) -> bool {
-        self.buttons_released.iter().find(|&&b| b == button).is_some()
+        self.buttons_released.iter().any(|&b| b == button)
     }
 }
 
 pub struct MouseInput<'a, Button, Coord>
 where
     Button: Copy + PartialEq + 'a,
-    Coord: Copy + Default + Add<Output=Coord> + 'a,
+    Coord: Copy + Default + Add<Output = Coord> + 'a,
 {
     mouse: &'a mut Mouse<Button, Coord>,
 }
@@ -77,7 +77,7 @@ where
 impl<'a, Button, Coord> MouseInput<'a, Button, Coord>
 where
     Button: Copy + PartialEq,
-    Coord: Copy + Default + Add<Output=Coord>,
+    Coord: Copy + Default + Add<Output = Coord>,
 {
     pub fn move_to(&mut self, position: [Coord; 2]) -> &mut Self {
         self.mouse.position = position;
@@ -91,14 +91,20 @@ where
     }
 
     pub fn press(&mut self, button: Button) -> &mut Self {
-        self.mouse.buttons_down.push(button);
-        self.mouse.buttons_pressed.push(button);
+        if !self.mouse.down(button) {
+            self.mouse.buttons_down.push(button);
+        }
+        if !self.mouse.pressed(button) {
+            self.mouse.buttons_pressed.push(button);
+        }
         self
     }
 
     pub fn release(&mut self, button: Button) -> &mut Self {
         self.mouse.buttons_down.retain(|&b| b != button);
-        self.mouse.buttons_released.push(button);
+        if !self.mouse.released(button) {
+            self.mouse.buttons_released.push(button);
+        }
         self
     }
 }
