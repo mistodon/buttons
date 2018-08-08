@@ -1,0 +1,6 @@
+[package]
+name = "buttons"
+version = "0.1.0"
+authors = ["***Realname*** ***Lastname*** <***redacted.email@redacted.nope***>"]
+
+[dependencies]
