@@ -75,7 +75,7 @@ impl<'a> KeyboardInput<'a> {
         self
     }
 
-    pub fn set_modifiers<M: Into<Modifiers>>( &mut self, modifiers: M) -> &mut Self {
+    pub fn set_modifiers<M: Into<Modifiers>>(&mut self, modifiers: M) -> &mut Self {
         self.keyboard.modifiers = modifiers.into();
         self
     }
@@ -83,7 +83,9 @@ impl<'a> KeyboardInput<'a> {
 
 pub trait KeyId {
     fn key_code(&self) -> usize;
-    fn from_key_code(key_code: usize) -> Option<Self> where Self: Sized;
+    fn from_key_code(key_code: usize) -> Option<Self>
+    where
+        Self: Sized;
 }
 
 impl KeyId for usize {
@@ -112,8 +114,7 @@ mod tests {
     fn key_down_when_pressed() {
         let mut keyboard = Keyboard::new();
         {
-            keyboard.begin_frame_input()
-                .press(10);
+            keyboard.begin_frame_input().press(10);
         }
         assert!(keyboard.down(10));
     }
@@ -122,9 +123,7 @@ mod tests {
     fn key_not_down_when_released() {
         let mut keyboard = Keyboard::new();
         {
-            keyboard.begin_frame_input()
-                .press(10)
-                .release(10);
+            keyboard.begin_frame_input().press(10).release(10);
         }
         assert!(!keyboard.down(10));
     }
@@ -133,8 +132,7 @@ mod tests {
     fn key_pressed_after_pressing() {
         let mut keyboard = Keyboard::new();
         {
-            keyboard.begin_frame_input()
-                .press(10);
+            keyboard.begin_frame_input().press(10);
         }
         assert!(keyboard.pressed(10));
     }
@@ -143,8 +141,7 @@ mod tests {
     fn key_released_after_releasing() {
         let mut keyboard = Keyboard::new();
         {
-            keyboard.begin_frame_input()
-                .release(10);
+            keyboard.begin_frame_input().release(10);
         }
         assert!(keyboard.released(10));
     }
@@ -153,9 +150,7 @@ mod tests {
     fn key_can_be_pressed_and_released_on_same_frame() {
         let mut keyboard = Keyboard::new();
         {
-            keyboard.begin_frame_input()
-                .press(10)
-                .release(10);
+            keyboard.begin_frame_input().press(10).release(10);
         }
         assert!(keyboard.pressed(10));
         assert!(keyboard.released(10));
@@ -165,8 +160,7 @@ mod tests {
     fn key_pressed_resets_at_start_of_frame() {
         let mut keyboard = Keyboard::new();
         {
-            keyboard.begin_frame_input()
-                .press(10);
+            keyboard.begin_frame_input().press(10);
         }
         {
             keyboard.begin_frame_input();
@@ -178,8 +172,7 @@ mod tests {
     fn key_released_resets_at_start_of_frame() {
         let mut keyboard = Keyboard::new();
         {
-            keyboard.begin_frame_input()
-                .release(10);
+            keyboard.begin_frame_input().release(10);
         }
         {
             keyboard.begin_frame_input();
@@ -191,8 +184,7 @@ mod tests {
     fn key_down_persists_across_frames() {
         let mut keyboard = Keyboard::new();
         {
-            keyboard.begin_frame_input()
-                .press(10);
+            keyboard.begin_frame_input().press(10);
         }
         {
             keyboard.begin_frame_input();
@@ -210,42 +202,46 @@ mod tests {
     fn can_set_modifiers() {
         let mut keyboard = Keyboard::new();
         {
-            keyboard.begin_frame_input()
-                .set_modifiers(Modifiers {
-                    ctrl: true,
-                    alt: true,
-                    shift: true,
-                    logo: true,
-                });
+            keyboard.begin_frame_input().set_modifiers(Modifiers {
+                ctrl: true,
+                alt: true,
+                shift: true,
+                logo: true,
+            });
         }
-        assert_eq!(keyboard.modifiers(), Modifiers {
-            ctrl: true,
-            alt: true,
-            shift: true,
-            logo: true,
-        })
+        assert_eq!(
+            keyboard.modifiers(),
+            Modifiers {
+                ctrl: true,
+                alt: true,
+                shift: true,
+                logo: true,
+            }
+        )
     }
 
     #[test]
     fn modifiers_persisit_over_frames() {
         let mut keyboard = Keyboard::new();
         {
-            keyboard.begin_frame_input()
-                .set_modifiers(Modifiers {
-                    ctrl: true,
-                    alt: true,
-                    shift: true,
-                    logo: true,
-                });
+            keyboard.begin_frame_input().set_modifiers(Modifiers {
+                ctrl: true,
+                alt: true,
+                shift: true,
+                logo: true,
+            });
         }
         {
             keyboard.begin_frame_input();
         }
-        assert_eq!(keyboard.modifiers(), Modifiers {
-            ctrl: true,
-            alt: true,
-            shift: true,
-            logo: true,
-        })
+        assert_eq!(
+            keyboard.modifiers(),
+            Modifiers {
+                ctrl: true,
+                alt: true,
+                shift: true,
+                logo: true,
+            }
+        )
     }
 }
