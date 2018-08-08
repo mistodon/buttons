@@ -2,6 +2,6 @@
 
 set -e
 
-cargo check --all-features
-cargo test --all-features
-cargo +nightly clippy --all-features
+cargo check
+cargo test
+cargo +nightly clippy
