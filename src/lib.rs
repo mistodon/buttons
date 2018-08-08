@@ -2,5 +2,4 @@
 
 mod keyboard;
 
-pub use keyboard::{Keyboard, KeyboardInput, KeyId, Modifiers};
-
+pub use keyboard::{KeyId, Keyboard, KeyboardInput, Modifiers};
