@@ -1,3 +1,20 @@
+pub trait KeyId: Copy {
+    fn key_code(self) -> u8;
+    fn from_key_code(key_code: u8) -> Option<Self>
+    where
+        Self: Sized;
+}
+
+impl KeyId for u8 {
+    fn key_code(self) -> u8 {
+        self
+    }
+
+    fn from_key_code(key_code: u8) -> Option<Self> {
+        Some(key_code)
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Modifiers {
     pub ctrl: bool,
@@ -40,19 +57,16 @@ impl Keyboard {
         KeyboardInput { keyboard: self }
     }
 
-    #[allow(needless_pass_by_value)]
     pub fn down<Key: KeyId>(&self, key: Key) -> bool {
-        self.keys_down[key.key_code()]
+        self.keys_down[key.key_code() as usize]
     }
 
-    #[allow(needless_pass_by_value)]
     pub fn pressed<Key: KeyId>(&self, key: Key) -> bool {
-        self.keys_pressed[key.key_code()]
+        self.keys_pressed[key.key_code() as usize]
     }
 
-    #[allow(needless_pass_by_value)]
     pub fn released<Key: KeyId>(&self, key: Key) -> bool {
-        self.keys_released[key.key_code()]
+        self.keys_released[key.key_code() as usize]
     }
 }
 
@@ -61,40 +75,21 @@ pub struct KeyboardInput<'a> {
 }
 
 impl<'a> KeyboardInput<'a> {
-    #[allow(needless_pass_by_value)]
     pub fn press<Key: KeyId>(&mut self, key: Key) -> &mut Self {
-        self.keyboard.keys_down[key.key_code()] = true;
-        self.keyboard.keys_pressed[key.key_code()] = true;
+        self.keyboard.keys_down[key.key_code() as usize] = true;
+        self.keyboard.keys_pressed[key.key_code() as usize] = true;
         self
     }
 
-    #[allow(needless_pass_by_value)]
     pub fn release<Key: KeyId>(&mut self, key: Key) -> &mut Self {
-        self.keyboard.keys_down[key.key_code()] = false;
-        self.keyboard.keys_released[key.key_code()] = true;
+        self.keyboard.keys_down[key.key_code() as usize] = false;
+        self.keyboard.keys_released[key.key_code() as usize] = true;
         self
     }
 
     pub fn set_modifiers<M: Into<Modifiers>>(&mut self, modifiers: M) -> &mut Self {
         self.keyboard.modifiers = modifiers.into();
         self
-    }
-}
-
-pub trait KeyId {
-    fn key_code(&self) -> usize;
-    fn from_key_code(key_code: usize) -> Option<Self>
-    where
-        Self: Sized;
-}
-
-impl KeyId for usize {
-    fn key_code(&self) -> usize {
-        *self
-    }
-
-    fn from_key_code(key_code: usize) -> Option<Self> {
-        Some(key_code)
     }
 }
 
