@@ -1,3 +1,5 @@
+use Event;
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Modifiers {
     pub ctrl: bool,
@@ -7,7 +9,7 @@ pub struct Modifiers {
 }
 
 #[derive(Debug, Clone)]
-pub struct Keyboard<Key, Mods = Modifiers>
+pub struct Keyboard<Key, Mods>
 where
     Key: Copy + PartialEq,
     Mods: Copy + Default,
@@ -98,6 +100,11 @@ where
 
     pub fn set_modifiers(&mut self, modifiers: Mods) -> &mut Self {
         self.keyboard.modifiers = modifiers;
+        self
+    }
+
+    pub fn handle_event<E: Event<Self>>(&mut self, event: &E) -> &mut Self {
+        event.handle(self);
         self
     }
 }
