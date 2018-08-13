@@ -1,4 +1,5 @@
 use std::ops::Add;
+use Event;
 
 #[derive(Debug, Clone)]
 pub struct Mouse<Button, Coord>
@@ -105,6 +106,11 @@ where
         if !self.mouse.released(button) {
             self.mouse.buttons_released.push(button);
         }
+        self
+    }
+
+    pub fn handle_event<E: Event<Self>>(&mut self, event: &E) -> &mut Self {
+        event.handle(self);
         self
     }
 }
