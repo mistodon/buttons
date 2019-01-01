@@ -1,4 +1,4 @@
-use Event;
+use crate::Event;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Modifiers {

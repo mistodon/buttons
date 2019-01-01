@@ -1,5 +1,5 @@
+use crate::Event;
 use std::ops::Add;
-use Event;
 
 #[derive(Debug, Clone)]
 pub struct Mouse<Button, Coord>
