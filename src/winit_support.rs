@@ -1,8 +1,8 @@
 use winit::{Event as WinitEvent, ModifiersState, MouseButton, VirtualKeyCode, WindowEvent};
 
-use keyboard::{Keyboard, KeyboardInput};
-use mouse::{Mouse, MouseInput};
-use Event;
+use crate::keyboard::{Keyboard, KeyboardInput};
+use crate::mouse::{Mouse, MouseInput};
+use crate::Event;
 
 pub type WinitKeyboard = Keyboard<VirtualKeyCode, ModifiersState>;
 pub type WinitMouse = Mouse<MouseButton, f64>;
