@@ -4,10 +4,6 @@ matrix:
   include:
     - rust: stable
       before_script:
-        - rustup component add rustfmt-preview
-        - rustup component add clippy-preview
-      script:
-        - |
-          cargo test --all-features &&
-          cargo fmt -- --check &&
-          cargo clippy --all-features -- -D clippy::all
+        - rustup component add rustfmt
+        - rustup component add clippy
+      script: ./run_tests
