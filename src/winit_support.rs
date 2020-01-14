@@ -4,13 +4,18 @@ use crate::keyboard::{Keyboard, KeyboardInput};
 use crate::mouse::{Mouse, MouseInput};
 use crate::Event;
 
+/// Alias for a `Keyboard` that can represent `winit` keyboard state.
 pub type WinitKeyboard = Keyboard<VirtualKeyCode, ModifiersState>;
+
+/// Alias for a `Mouse` that can represent `winit` mouse state.
 pub type WinitMouse = Mouse<MouseButton, f64>;
 
+/// Create a new WinitKeyboard.
 pub fn keyboard() -> WinitKeyboard {
     Keyboard::new()
 }
 
+/// Create a new WinitMouse.
 pub fn mouse() -> WinitMouse {
     Mouse::new()
 }
@@ -73,6 +78,7 @@ impl<'a> Event<MouseInput<'a, MouseButton, f64>> for WindowEvent {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use winit::{self, ElementState};

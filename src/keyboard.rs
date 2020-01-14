@@ -1,5 +1,7 @@
 use crate::Event;
 
+/// The current state of the modifier keys. You can use this if the windowing
+/// library you are using doesn't have an equivalent.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct Modifiers {
     pub ctrl: bool,
@@ -8,6 +10,7 @@ pub struct Modifiers {
     pub logo: bool,
 }
 
+/// A structure representing the current state of a keyboard.
 #[derive(Debug, Clone)]
 pub struct Keyboard<Key, Mods>
 where
@@ -44,29 +47,37 @@ where
         Default::default()
     }
 
+    /// Returns the current state of the modifier keys.
     pub fn modifiers(&self) -> Mods {
         self.modifiers
     }
 
+    /// Returns a `KeyboardInput` structure that can be used to
+    /// register changes to the state of the keyboard.
     pub fn begin_frame_input(&mut self) -> KeyboardInput<Key, Mods> {
         self.keys_pressed.clear();
         self.keys_released.clear();
         KeyboardInput { keyboard: self }
     }
 
+    /// Returns `true` if the given key is currently held down.
     pub fn down(&self, key: Key) -> bool {
         self.keys_down.iter().any(|&k| k == key)
     }
 
+    /// Returns `true` if the given key was pressed this frame.
     pub fn pressed(&self, key: Key) -> bool {
         self.keys_pressed.iter().any(|&k| k == key)
     }
 
+    /// Returns `true` if the given key was released this frame.
     pub fn released(&self, key: Key) -> bool {
         self.keys_released.iter().any(|&k| k == key)
     }
 }
 
+/// An object that has methods for registering keyboard inputs this frame.
+/// It must be dropped before the underlying `Keyboard` can be queried.
 pub struct KeyboardInput<'a, Key, Mods>
 where
     Key: Copy + PartialEq + 'a,
@@ -80,6 +91,7 @@ where
     Key: Copy + PartialEq,
     Mods: Copy + Default,
 {
+    /// Register that a key was pressed down.
     pub fn press(&mut self, key: Key) -> &mut Self {
         if !self.keyboard.down(key) {
             self.keyboard.keys_down.push(key);
@@ -90,6 +102,7 @@ where
         self
     }
 
+    /// Register that a key was released.
     pub fn release(&mut self, key: Key) -> &mut Self {
         self.keyboard.keys_down.retain(|&k| k != key);
         if !self.keyboard.released(key) {
@@ -98,11 +111,14 @@ where
         self
     }
 
+    /// Register that the current state of the modifier keys has changed.
     pub fn set_modifiers(&mut self, modifiers: Mods) -> &mut Self {
         self.keyboard.modifiers = modifiers;
         self
     }
 
+    /// Convenience method for handling events. The type of event, `E`, will
+    /// vary depending on the windowing library being used.
     pub fn handle_event<E: Event<Self>>(&mut self, event: &E) -> &mut Self {
         event.handle(self);
         self
