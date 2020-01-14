@@ -1,6 +1,7 @@
 use crate::Event;
 use std::ops::Add;
 
+/// A structure representing the current state of a mouse.
 #[derive(Debug, Clone)]
 pub struct Mouse<Button, Coord>
 where
@@ -37,6 +38,7 @@ where
         Self::default()
     }
 
+    /// Create the Mouse at a specific pointer position.
     pub fn at_position(position: [Coord; 2]) -> Self {
         Mouse {
             position,
@@ -44,29 +46,38 @@ where
         }
     }
 
+    /// Returns a `MouseInput` structure that can be used to
+    /// register changes to the button and pointer state of the
+    /// mouse.
     pub fn begin_frame_input(&mut self) -> MouseInput<Button, Coord> {
         self.buttons_pressed.clear();
         self.buttons_released.clear();
         MouseInput { mouse: self }
     }
 
+    /// Returns the position of the mouse pointer.
     pub fn position(&self) -> [Coord; 2] {
         self.position
     }
 
+    /// Returns `true` if the given button is currently held down.
     pub fn down(&self, button: Button) -> bool {
         self.buttons_down.iter().any(|&b| b == button)
     }
 
+    /// Returns `true` if the given button was pressed this frame.
     pub fn pressed(&self, button: Button) -> bool {
         self.buttons_pressed.iter().any(|&b| b == button)
     }
 
+    /// Returns `true` if the given button was released this frame.
     pub fn released(&self, button: Button) -> bool {
         self.buttons_released.iter().any(|&b| b == button)
     }
 }
 
+/// An object that has methods for registering mouse inputs this frame.
+/// It must be dropped before the underlying `Mouse` can be queried.
 pub struct MouseInput<'a, Button, Coord>
 where
     Button: Copy + PartialEq + 'a,
@@ -80,17 +91,20 @@ where
     Button: Copy + PartialEq,
     Coord: Copy + Default + Add<Output = Coord>,
 {
+    /// Set the position of the mouse to the given value.
     pub fn move_to(&mut self, position: [Coord; 2]) -> &mut Self {
         self.mouse.position = position;
         self
     }
 
+    /// Modify the position of the mouse by the given offset.
     pub fn move_by(&mut self, [x, y]: [Coord; 2]) -> &mut Self {
         let [ox, oy] = self.mouse.position;
         self.mouse.position = [ox + x, oy + y];
         self
     }
 
+    /// Register that a button was pressed down.
     pub fn press(&mut self, button: Button) -> &mut Self {
         if !self.mouse.down(button) {
             self.mouse.buttons_down.push(button);
@@ -101,6 +115,7 @@ where
         self
     }
 
+    /// Register that a button was released.
     pub fn release(&mut self, button: Button) -> &mut Self {
         self.mouse.buttons_down.retain(|&b| b != button);
         if !self.mouse.released(button) {
@@ -109,6 +124,8 @@ where
         self
     }
 
+    /// Convenience method for handling events. The type of event, `E`, will
+    /// vary depending on the windowing library being used.
     pub fn handle_event<E: Event<Self>>(&mut self, event: &E) -> &mut Self {
         event.handle(self);
         self
