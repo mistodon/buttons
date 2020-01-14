@@ -14,22 +14,22 @@ A simple Rust crate for managing and querying input state.
 (Enabling the `winit-support` feature.)
 
 ```rust
-    let mut keyboard = buttons::winit_support::keyboard();
-    let mut mouse = buttons::winit_support::mouse();
+let mut keyboard = buttons::winit_support::keyboard();
+let mut mouse = buttons::winit_support::mouse();
 
-    {
-        let mut keyboard_input = keyboard.begin_frame_input();
-        let mut mouse_input = mouse.begin_frame_input();
+{
+    let mut keyboard_input = keyboard.begin_frame_input();
+    let mut mouse_input = mouse.begin_frame_input();
 
-        events_loop.poll_events(|event| {
-            if let Event::WindowEvent { event, .. } = event {
-                keyboard_input.handle_event(&event);
-                mouse_input.handle_event(&event);
-            }
-        });
-    }
+    events_loop.poll_events(|event| {
+        if let Event::WindowEvent { event, .. } = event {
+            keyboard_input.handle_event(&event);
+            mouse_input.handle_event(&event);
+        }
+    });
+}
 
-    if keyboard.pressed(VirtualKeyCode::Escape) || mouse.released(MouseButton::Right) {
-        ...
-    }
+if keyboard.pressed(VirtualKeyCode::Escape) || mouse.released(MouseButton::Right) {
+    ...
+}
 ```
