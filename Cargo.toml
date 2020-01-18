@@ -1,6 +1,6 @@
 [package]
 name = "buttons"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["***Realname*** ***Lastname*** <***redacted.email@redacted.nope***>"]
 description = "A simple API for storing and querying input state."
 edition = "2018"
@@ -15,7 +15,7 @@ license = "CC0-1.0"
 all-features = true
 
 [dependencies.winit]
-version = ">= 0.6.0, < 0.20.0"
+version = "~0.20.0"
 optional = true
 
 [features]
@@ -23,4 +23,4 @@ default = []
 winit-support = ["winit"]
 
 [badges]
-travis-ci = { repository = "Mistodon/buttons" }
+travis-ci = { repository = "mistodon/buttons" }
