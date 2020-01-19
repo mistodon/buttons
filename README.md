@@ -1,11 +1,11 @@
 buttons
 ===
 
-A simple Rust crate for managing and querying input state.
-
 [![Build Status](https://travis-ci.org/mistodon/buttons.svg?branch=master)](https://travis-ci.org/mistodon/buttons)
 [![Crates.io](https://img.shields.io/crates/v/buttons.svg)](https://crates.io/crates/buttons)
 [![Docs.rs](https://docs.rs/buttons/badge.svg)](https://docs.rs/buttons/0.2.0/buttons/)
+
+A simple Rust crate for managing and querying input state.
 
 # Usage
 
