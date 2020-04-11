@@ -2,15 +2,15 @@ use winit::event::{
     DeviceEvent, Event as WinitEvent, ModifiersState, MouseButton, VirtualKeyCode, WindowEvent,
 };
 
-use crate::keyboard::{Keyboard, KeyboardInput};
-use crate::mouse::{Mouse, MouseInput};
+use crate::keyboard::Keyboard;
+use crate::mouse::Mouse;
 use crate::Event;
 
 /// Alias for a `Keyboard` that can represent `winit` keyboard state.
 pub type WinitKeyboard = Keyboard<VirtualKeyCode, ModifiersState>;
 
 /// Alias for a `Mouse` that can represent `winit` mouse state.
-pub type WinitMouse = Mouse<MouseButton, i32>;
+pub type WinitMouse = Mouse<MouseButton, f64>;
 
 /// Create a new WinitKeyboard.
 pub fn keyboard() -> WinitKeyboard {
@@ -22,8 +22,8 @@ pub fn mouse() -> WinitMouse {
     Mouse::new()
 }
 
-impl<'a, 'b, T> Event<KeyboardInput<'a, VirtualKeyCode, ModifiersState>> for WinitEvent<'b, T> {
-    fn handle(&self, keyboard: &mut KeyboardInput<VirtualKeyCode, ModifiersState>) {
+impl<'a, 'b, T> Event<Keyboard<VirtualKeyCode, ModifiersState>> for WinitEvent<'b, T> {
+    fn handle(&self, keyboard: &mut Keyboard<VirtualKeyCode, ModifiersState>) {
         match self {
             WinitEvent::WindowEvent { event, .. } => {
                 use winit::event::{ElementState, KeyboardInput};
@@ -32,6 +32,7 @@ impl<'a, 'b, T> Event<KeyboardInput<'a, VirtualKeyCode, ModifiersState>> for Win
                     let KeyboardInput {
                         state,
                         virtual_keycode,
+                        modifiers,
                         ..
                     } = input;
                     if let Some(vkc) = virtual_keycode {
@@ -40,10 +41,12 @@ impl<'a, 'b, T> Event<KeyboardInput<'a, VirtualKeyCode, ModifiersState>> for Win
                             ElementState::Released => keyboard.release(*vkc),
                         };
                     }
+                    keyboard.set_modifiers(*modifiers);
                 }
             }
             WinitEvent::DeviceEvent { event, .. } => {
                 if let DeviceEvent::ModifiersChanged(state) = event {
+                    // TODO: This... doesn't work (on macOS)???
                     keyboard.set_modifiers(*state);
                 }
             }
@@ -52,8 +55,8 @@ impl<'a, 'b, T> Event<KeyboardInput<'a, VirtualKeyCode, ModifiersState>> for Win
     }
 }
 
-impl<'a, 'b, T> Event<MouseInput<'a, MouseButton, i32>> for WinitEvent<'b, T> {
-    fn handle(&self, mouse: &mut MouseInput<MouseButton, i32>) {
+impl<'a, 'b, T> Event<Mouse<MouseButton, f64>> for WinitEvent<'b, T> {
+    fn handle(&self, mouse: &mut Mouse<MouseButton, f64>) {
         if let WinitEvent::WindowEvent { event, .. } = self {
             {
                 use winit::event::ElementState;
@@ -85,14 +88,10 @@ mod tests {
     fn create_mouse_and_keyboard() {
         let mut keyboard = keyboard();
         let mut mouse = mouse();
-        {
-            let keyboard = &mut keyboard.begin_frame_input();
-            let mouse = &mut mouse.begin_frame_input();
-            keyboard.press(VirtualKeyCode::H);
-            keyboard.set_modifiers(ModifiersState::default());
-            mouse.press(MouseButton::Left);
-            mouse.move_to([0, 0]);
-        }
+        keyboard.press(VirtualKeyCode::H);
+        keyboard.set_modifiers(ModifiersState::default());
+        mouse.press(MouseButton::Left);
+        mouse.move_to([0., 0.]);
     }
 
     fn make_modifier_event(ctrl: bool) -> WinitEvent<'static, ()> {
@@ -151,7 +150,7 @@ mod tests {
         }
     }
 
-    fn make_cursor_event(position: [i32; 2]) -> WinitEvent<'static, ()> {
+    fn make_cursor_event(position: [f64; 2]) -> WinitEvent<'static, ()> {
         use winit::dpi::PhysicalPosition;
 
         let [x, y] = position;
@@ -171,9 +170,8 @@ mod tests {
     fn press_via_event() {
         let event = make_keyboard_event(true, VirtualKeyCode::H);
         let mut keyboard = keyboard();
-        {
-            keyboard.begin_frame_input().handle_event(&event);
-        }
+        keyboard.handle_event(&event);
+
         assert!(keyboard.pressed(VirtualKeyCode::H));
     }
 
@@ -181,9 +179,8 @@ mod tests {
     fn release_via_event() {
         let event = make_keyboard_event(false, VirtualKeyCode::H);
         let mut keyboard = keyboard();
-        {
-            keyboard.begin_frame_input().handle_event(&event);
-        }
+        keyboard.handle_event(&event);
+
         assert!(keyboard.released(VirtualKeyCode::H));
     }
 
@@ -191,9 +188,8 @@ mod tests {
     fn modifiers_via_event() {
         let event = make_modifier_event(true);
         let mut keyboard = keyboard();
-        {
-            keyboard.begin_frame_input().handle_event(&event);
-        }
+        keyboard.handle_event(&event);
+
         let modifiers = ModifiersState::CTRL;
         assert_eq!(keyboard.modifiers(), modifiers);
     }
@@ -202,9 +198,8 @@ mod tests {
     fn modifiers_off_via_event() {
         let event = make_modifier_event(false);
         let mut keyboard = keyboard();
-        {
-            keyboard.begin_frame_input().handle_event(&event);
-        }
+        keyboard.handle_event(&event);
+
         let modifiers = ModifiersState::default();
         assert_eq!(keyboard.modifiers(), modifiers);
     }
@@ -213,9 +208,8 @@ mod tests {
     fn mouse_button_press_via_event() {
         let event = make_mouse_button_event(true, MouseButton::Right);
         let mut mouse = mouse();
-        {
-            mouse.begin_frame_input().handle_event(&event);
-        }
+        mouse.handle_event(&event);
+
         assert!(mouse.pressed(MouseButton::Right));
     }
 
@@ -223,19 +217,17 @@ mod tests {
     fn mouse_button_release_via_event() {
         let event = make_mouse_button_event(false, MouseButton::Right);
         let mut mouse = mouse();
-        {
-            mouse.begin_frame_input().handle_event(&event);
-        }
+        mouse.handle_event(&event);
+
         assert!(mouse.released(MouseButton::Right));
     }
 
     #[test]
     fn mouse_move_via_event() {
-        let event = make_cursor_event([1, 1]);
+        let event = make_cursor_event([1., 1.]);
         let mut mouse = mouse();
-        {
-            mouse.begin_frame_input().handle_event(&event);
-        }
-        assert_eq!(mouse.position(), [1, 1]);
+        mouse.handle_event(&event);
+
+        assert_eq!(mouse.position(), [1., 1.]);
     }
 }
