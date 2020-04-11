@@ -50,8 +50,8 @@ pub mod winit_support;
 mod keyboard;
 mod mouse;
 
-pub use crate::keyboard::{Keyboard, KeyboardInput};
-pub use crate::mouse::{Mouse, MouseInput};
+pub use crate::keyboard::Keyboard;
+pub use crate::mouse::Mouse;
 
 /// A trait for events that can modify input state.
 pub trait Event<Handler> {

@@ -46,15 +46,6 @@ where
         }
     }
 
-    /// Returns a `MouseInput` structure that can be used to
-    /// register changes to the button and pointer state of the
-    /// mouse.
-    pub fn begin_frame_input(&mut self) -> MouseInput<Button, Coord> {
-        self.buttons_pressed.clear();
-        self.buttons_released.clear();
-        MouseInput { mouse: self }
-    }
-
     /// Returns the position of the mouse pointer.
     pub fn position(&self) -> [Coord; 2] {
         self.position
@@ -74,52 +65,42 @@ where
     pub fn released(&self, button: Button) -> bool {
         self.buttons_released.iter().any(|&b| b == button)
     }
-}
 
-/// An object that has methods for registering mouse inputs this frame.
-/// It must be dropped before the underlying `Mouse` can be queried.
-pub struct MouseInput<'a, Button, Coord>
-where
-    Button: Copy + PartialEq + 'a,
-    Coord: Copy + Default + Add<Output = Coord> + 'a,
-{
-    mouse: &'a mut Mouse<Button, Coord>,
-}
+    pub fn clear_presses(&mut self) -> &mut Self {
+        self.buttons_pressed.clear();
+        self.buttons_released.clear();
+        self
+    }
 
-impl<'a, Button, Coord> MouseInput<'a, Button, Coord>
-where
-    Button: Copy + PartialEq,
-    Coord: Copy + Default + Add<Output = Coord>,
-{
     /// Set the position of the mouse to the given value.
     pub fn move_to(&mut self, position: [Coord; 2]) -> &mut Self {
-        self.mouse.position = position;
+        self.position = position;
         self
     }
 
     /// Modify the position of the mouse by the given offset.
     pub fn move_by(&mut self, [x, y]: [Coord; 2]) -> &mut Self {
-        let [ox, oy] = self.mouse.position;
-        self.mouse.position = [ox + x, oy + y];
+        let [ox, oy] = self.position;
+        self.position = [ox + x, oy + y];
         self
     }
 
     /// Register that a button was pressed down.
     pub fn press(&mut self, button: Button) -> &mut Self {
-        if !self.mouse.down(button) {
-            self.mouse.buttons_down.push(button);
+        if !self.down(button) {
+            self.buttons_down.push(button);
         }
-        if !self.mouse.pressed(button) {
-            self.mouse.buttons_pressed.push(button);
+        if !self.pressed(button) {
+            self.buttons_pressed.push(button);
         }
         self
     }
 
     /// Register that a button was released.
     pub fn release(&mut self, button: Button) -> &mut Self {
-        self.mouse.buttons_down.retain(|&b| b != button);
-        if !self.mouse.released(button) {
-            self.mouse.buttons_released.push(button);
+        self.buttons_down.retain(|&b| b != button);
+        if !self.released(button) {
+            self.buttons_released.push(button);
         }
         self
     }
@@ -159,63 +140,49 @@ mod tests {
     #[test]
     fn mouse_can_be_placed() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
-        {
-            mouse.begin_frame_input().move_to([100.0, 100.0]);
-        }
+        mouse.move_to([100.0, 100.0]);
         assert_eq!(mouse.position(), [100.0, 100.0]);
     }
 
     #[test]
     fn mouse_can_be_moved() {
         let mut mouse: Mouse<usize, f64> = Mouse::at_position([1.0, 1.0]);
-        {
-            mouse.begin_frame_input().move_by([-1.0, -1.0]);
-        }
+        mouse.move_by([-1.0, -1.0]);
         assert_eq!(mouse.position(), [0.0, 0.0]);
     }
 
     #[test]
     fn mouse_button_down_when_pressed() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
-        {
-            mouse.begin_frame_input().press(1);
-        }
+        mouse.press(1);
         assert!(mouse.down(1));
     }
 
     #[test]
     fn mouse_button_not_down_when_released() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
-        {
-            mouse.begin_frame_input().press(1).release(1);
-        }
+        mouse.press(1).release(1);
         assert!(!mouse.down(1));
     }
 
     #[test]
     fn mouse_button_pressed_after_pressing() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
-        {
-            mouse.begin_frame_input().press(1);
-        }
+        mouse.press(1);
         assert!(mouse.pressed(1));
     }
 
     #[test]
     fn mouse_button_released_after_releasing() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
-        {
-            mouse.begin_frame_input().release(1);
-        }
+        mouse.release(1);
         assert!(mouse.released(1));
     }
 
     #[test]
     fn mouse_button_can_be_pressed_and_released_on_same_frame() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
-        {
-            mouse.begin_frame_input().press(1).release(1);
-        }
+        mouse.press(1).release(1);
         assert!(mouse.pressed(1));
         assert!(mouse.released(1));
     }
@@ -223,36 +190,24 @@ mod tests {
     #[test]
     fn mouse_button_pressed_resets_at_start_of_frame() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
-        {
-            mouse.begin_frame_input().press(1);
-        }
-        {
-            mouse.begin_frame_input();
-        }
+        mouse.press(1);
+        mouse.clear_presses();
         assert!(!mouse.pressed(1));
     }
 
     #[test]
     fn mouse_button_released_resets_at_start_of_frame() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
-        {
-            mouse.begin_frame_input().release(1);
-        }
-        {
-            mouse.begin_frame_input();
-        }
+        mouse.release(1);
+        mouse.clear_presses();
         assert!(!mouse.pressed(1));
     }
 
     #[test]
     fn mouse_button_down_persists_across_frames() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
-        {
-            mouse.begin_frame_input().press(1);
-        }
-        {
-            mouse.begin_frame_input();
-        }
+        mouse.press(1);
+        mouse.clear_presses();
         assert!(mouse.down(1));
     }
 }
