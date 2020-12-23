@@ -1,6 +1,4 @@
-use winit::event::{
-    DeviceEvent, Event as WinitEvent, ModifiersState, MouseButton, VirtualKeyCode, WindowEvent,
-};
+use winit::event::{Event as WinitEvent, ModifiersState, MouseButton, VirtualKeyCode, WindowEvent};
 
 use crate::keyboard::Keyboard;
 use crate::mouse::Mouse;
@@ -24,15 +22,14 @@ pub fn mouse() -> WinitMouse {
 
 impl<'a, 'b, T> Event<Keyboard<VirtualKeyCode, ModifiersState>> for WinitEvent<'b, T> {
     fn handle(&self, keyboard: &mut Keyboard<VirtualKeyCode, ModifiersState>) {
-        match self {
-            WinitEvent::WindowEvent { event, .. } => {
-                use winit::event::{ElementState, KeyboardInput};
+        if let WinitEvent::WindowEvent { event, .. } = self {
+            use winit::event::{ElementState, KeyboardInput};
 
-                if let WindowEvent::KeyboardInput { input, .. } = event {
+            match event {
+                WindowEvent::KeyboardInput { input, .. } => {
                     let KeyboardInput {
                         state,
                         virtual_keycode,
-                        modifiers,
                         ..
                     } = input;
                     if let Some(vkc) = virtual_keycode {
@@ -41,16 +38,12 @@ impl<'a, 'b, T> Event<Keyboard<VirtualKeyCode, ModifiersState>> for WinitEvent<'
                             ElementState::Released => keyboard.release(*vkc),
                         };
                     }
-                    keyboard.set_modifiers(*modifiers);
                 }
-            }
-            WinitEvent::DeviceEvent { event, .. } => {
-                if let DeviceEvent::ModifiersChanged(state) = event {
-                    // TODO: This... doesn't work (on macOS)???
+                WindowEvent::ModifiersChanged(state) => {
                     keyboard.set_modifiers(*state);
                 }
+                _ => (),
             }
-            _ => (),
         }
     }
 }
@@ -101,9 +94,9 @@ mod tests {
             ModifiersState::default()
         };
         unsafe {
-            WinitEvent::DeviceEvent {
-                device_id: ::std::mem::uninitialized(),
-                event: DeviceEvent::ModifiersChanged(state),
+            WinitEvent::WindowEvent {
+                window_id: ::std::mem::uninitialized(),
+                event: WindowEvent::ModifiersChanged(state),
             }
         }
     }
