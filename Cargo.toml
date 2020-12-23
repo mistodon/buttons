@@ -1,6 +1,6 @@
 [package]
 name = "buttons"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Vi <***redacted.email@redacted.nope***>"]
 description = "A simple API for storing and querying input state."
 edition = "2018"
