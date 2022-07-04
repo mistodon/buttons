@@ -1,13 +1,13 @@
 [package]
 name = "buttons"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["Vi <violet@hey.com>"]
 description = "A simple API for storing and querying input state."
-edition = "2018"
+edition = "2021"
 homepage = "https://github.com/mistodon/buttons"
 repository = "https://github.com/mistodon/buttons"
 readme = "README.md"
-keywords = ["input", "keyboard", "mouse"]
+keywords = ["input", "keyboard", "mouse", "touch"]
 categories = ["games"]
 license = "CC0-1.0"
 
@@ -18,9 +18,9 @@ all-features = true
 version = "~0.24.0"
 optional = true
 
+[dev-dependencies.winit]
+version = "~0.24.0"
+
 [features]
 default = []
-winit-support = ["winit"]
-
-[badges]
-travis-ci = { repository = "mistodon/buttons" }
+winit = ["dep:winit"]

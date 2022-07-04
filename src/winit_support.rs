@@ -1,14 +1,15 @@
 use winit::event::{Event as WinitEvent, ModifiersState, MouseButton, VirtualKeyCode, WindowEvent};
 
-use crate::keyboard::Keyboard;
-use crate::mouse::Mouse;
-use crate::Event;
+use crate::{Event, Keyboard, Mouse, Touchpad};
 
 /// Alias for a `Keyboard` that can represent `winit` keyboard state.
 pub type WinitKeyboard = Keyboard<VirtualKeyCode, ModifiersState>;
 
 /// Alias for a `Mouse` that can represent `winit` mouse state.
 pub type WinitMouse = Mouse<MouseButton, f64>;
+
+/// Alias for a `Touchpad` that can represent `winit` touch state.
+pub type WinitTouchpad = Touchpad<u64, f64>;
 
 /// Create a new WinitKeyboard.
 pub fn keyboard() -> WinitKeyboard {
@@ -20,8 +21,13 @@ pub fn mouse() -> WinitMouse {
     Mouse::new()
 }
 
-impl<'a, 'b, T> Event<Keyboard<VirtualKeyCode, ModifiersState>> for WinitEvent<'b, T> {
-    fn handle(&self, keyboard: &mut Keyboard<VirtualKeyCode, ModifiersState>) {
+/// Create a new WinitMouse.
+pub fn touch() -> WinitTouchpad {
+    Touchpad::new()
+}
+
+impl<'a, 'b, T> Event<WinitKeyboard> for WinitEvent<'b, T> {
+    fn handle(&self, keyboard: &mut WinitKeyboard) {
         if let WinitEvent::WindowEvent { event, .. } = self {
             use winit::event::{ElementState, KeyboardInput};
 
@@ -48,8 +54,8 @@ impl<'a, 'b, T> Event<Keyboard<VirtualKeyCode, ModifiersState>> for WinitEvent<'
     }
 }
 
-impl<'a, 'b, T> Event<Mouse<MouseButton, f64>> for WinitEvent<'b, T> {
-    fn handle(&self, mouse: &mut Mouse<MouseButton, f64>) {
+impl<'a, 'b, T> Event<WinitMouse> for WinitEvent<'b, T> {
+    fn handle(&self, mouse: &mut WinitMouse) {
         if let WinitEvent::WindowEvent { event, .. } = self {
             {
                 use winit::event::ElementState;
@@ -71,20 +77,48 @@ impl<'a, 'b, T> Event<Mouse<MouseButton, f64>> for WinitEvent<'b, T> {
     }
 }
 
+impl<'a, 'b, T> Event<Touchpad<u64, f64>> for WinitEvent<'b, T> {
+    fn handle(&self, touchpad: &mut Touchpad<u64, f64>) {
+        if let WinitEvent::WindowEvent { event, .. } = self {
+            {
+                use winit::event::TouchPhase;
+
+                match event {
+                    WindowEvent::Touch(touch) => {
+                        let pos = [touch.location.x, touch.location.y];
+                        let phase = match touch.phase {
+                            TouchPhase::Started => crate::touch::TouchPhase::Start,
+                            TouchPhase::Ended => crate::touch::TouchPhase::End,
+                            TouchPhase::Moved => crate::touch::TouchPhase::Move,
+                            TouchPhase::Cancelled => crate::touch::TouchPhase::Cancel,
+                        };
+                        touchpad.touch_event(touch.id, pos, phase);
+                    }
+                    _ => (),
+                }
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(deprecated)]
 mod tests {
     use super::*;
+    use crate::touch::TouchPhase;
     use winit::event::ElementState;
+    use winit::event::TouchPhase as TP;
 
     #[test]
-    fn create_mouse_and_keyboard() {
+    fn create_devices() {
         let mut keyboard = keyboard();
         let mut mouse = mouse();
+        let mut touchpad = touch();
         keyboard.press(VirtualKeyCode::H);
         keyboard.set_modifiers(ModifiersState::default());
         mouse.press(MouseButton::Left);
         mouse.move_to([0., 0.]);
+        touchpad.touch_event(0_u64, [100., 100.], TouchPhase::Start);
     }
 
     fn make_modifier_event(ctrl: bool) -> WinitEvent<'static, ()> {
@@ -139,6 +173,21 @@ mod tests {
                     button,
                     modifiers: ModifiersState::default(),
                 },
+            }
+        }
+    }
+
+    fn make_touch_event(id: u64, pos: [f64; 2], phase: TP) -> WinitEvent<'static, ()> {
+        unsafe {
+            WinitEvent::WindowEvent {
+                window_id: ::std::mem::uninitialized(),
+                event: WindowEvent::Touch(winit::event::Touch {
+                    device_id: ::std::mem::uninitialized(),
+                    phase,
+                    location: winit::dpi::PhysicalPosition::new(pos[0], pos[1]),
+                    force: None,
+                    id,
+                }),
             }
         }
     }
@@ -222,5 +271,51 @@ mod tests {
         mouse.handle_event(&event);
 
         assert_eq!(mouse.position(), [1., 1.]);
+    }
+
+    #[test]
+    fn touch_via_event() {
+        let mut touch = touch();
+        let event = make_touch_event(0, [1., 1.], TP::Started);
+        touch.handle_event(&event);
+
+        assert_eq!(
+            touch.first_touch(),
+            Some(&crate::touch::Touch {
+                id: 0,
+                position: [1., 1.],
+                tapped: true,
+                released: false,
+            })
+        );
+
+        touch.clear_taps();
+
+        assert_eq!(
+            touch.first_touch(),
+            Some(&crate::touch::Touch {
+                id: 0,
+                position: [1., 1.],
+                tapped: false,
+                released: false,
+            })
+        );
+
+        let event = make_touch_event(0, [10., 10.], TP::Ended);
+        touch.handle_event(&event);
+
+        assert_eq!(
+            touch.first_touch(),
+            Some(&crate::touch::Touch {
+                id: 0,
+                position: [10., 10.],
+                tapped: false,
+                released: true,
+            })
+        );
+
+        touch.clear_taps();
+
+        assert_eq!(touch.first_touch(), None);
     }
 }

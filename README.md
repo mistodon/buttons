@@ -11,25 +11,26 @@ A simple Rust crate for managing and querying input state.
 
 ## With `winit`
 
-(Enabling the `winit-support` feature.)
+(Enabling the `winit` feature.)
 
 ```rust
-let mut keyboard = buttons::winit_support::keyboard();
-let mut mouse = buttons::winit_support::mouse();
+let mut event_loop = winit::event_loop::EventLoop::new();
+let mut keyboard = buttons::winit::keyboard();
+let mut mouse = buttons::winit::mouse();
+let mut touch = buttons::winit::touch();
 
-{
-    let mut keyboard_input = keyboard.begin_frame_input();
-    let mut mouse_input = mouse.begin_frame_input();
+// Track input
+event_loop.run(move |event, _, _| {
+    keyboard.handle_event(&event);
+    mouse.handle_event(&event);
+    touch.handle_event(&event);
 
-    events_loop.poll_events(|event| {
-        if let Event::WindowEvent { event, .. } = event {
-            keyboard_input.handle_event(&event);
-            mouse_input.handle_event(&event);
-        }
-    });
-}
-
-if keyboard.pressed(VirtualKeyCode::Escape) || mouse.released(MouseButton::Right) {
-    ...
-}
+    // Check state
+    if keyboard.pressed(VirtualKeyCode::Escape)
+        || mouse.released(MouseButton::Right)
+        || touch.first_touch().is_some()
+    {
+        // Do something
+    }
+});
 ```

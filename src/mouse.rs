@@ -66,6 +66,7 @@ where
         self.buttons_released.iter().any(|&b| b == button)
     }
 
+    /// Clears the pressed state of held buttons. Should be called at end of frame.
     pub fn clear_presses(&mut self) -> &mut Self {
         self.buttons_pressed.clear();
         self.buttons_released.clear();

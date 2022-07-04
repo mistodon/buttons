@@ -6,7 +6,7 @@
 //!
 //! The core data structures of `Mouse` and `Keyboard` are generic, in theory
 //! supporting multiple windowing libraries. You can roll your own, or you can
-//! enable the `winit-support` which has factory methods to easily create
+//! enable the `winit` which has factory methods to easily create
 //! a `Mouse` and `Keyboard` which work with the `winit` library.
 //!
 //! As stated, the mouse and keyboard are immutable. To track input changes,
@@ -15,43 +15,42 @@
 //!
 //! # Examples
 //!
-//! ```rust
-//! # #[cfg(feature = "winit_support")] {
-//! # use winit::{Event, VirtualKeyCode, MouseButton};
+//! ```rust,no_run
+//! # use winit::event::{Event, VirtualKeyCode, MouseButton};
+//! let mut event_loop = winit::event_loop::EventLoop::new();
 //! let mut keyboard = buttons::winit_support::keyboard();
 //! let mut mouse = buttons::winit_support::mouse();
+//! let mut touch = buttons::winit_support::touch();
 //!
 //! // Track input
-//! {
-//!     let mut keyboard_input = keyboard.begin_frame_input();
-//!     let mut mouse_input = mouse.begin_frame_input();
+//! event_loop.run(move |event, _, _| {
+//!     keyboard.handle_event(&event);
+//!     mouse.handle_event(&event);
+//!     touch.handle_event(&event);
 //!
-//!     events_loop.poll_events(|event| {
-//!         if let Event::WindowEvent { event, .. } = event {
-//!             keyboard_input.handle_event(&event);
-//!             mouse_input.handle_event(&event);
-//!         }
-//!     });
-//! }
-//!
-//! // Check state
-//! if keyboard.pressed(VirtualKeyCode::Escape) || mouse.released(MouseButton::Right) {
-//!     // Do something
-//! }
-//! # }
+//!     // Check state
+//!     if keyboard.pressed(VirtualKeyCode::Escape)
+//!         || mouse.released(MouseButton::Right)
+//!         || touch.first_touch().is_some()
+//!     {
+//!         // Do something
+//!     }
+//! });
 //! ```
 
-#[cfg(feature = "winit-support")]
+#[cfg(feature = "winit")]
 extern crate winit;
 
-#[cfg(feature = "winit-support")]
+#[cfg(feature = "winit")]
 pub mod winit_support;
 
 mod keyboard;
 mod mouse;
+mod touch;
 
 pub use crate::keyboard::Keyboard;
 pub use crate::mouse::Mouse;
+pub use crate::touch::Touchpad;
 
 /// A trait for events that can modify input state.
 pub trait Event<Handler> {
