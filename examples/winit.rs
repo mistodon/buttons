@@ -33,6 +33,7 @@ modifiers: {:?}
 space pressed: {}
 space held: {}
 space released: {}
+text: {}
 
 left clicked: {}
 mouse position: {:?}
@@ -43,6 +44,7 @@ primary touch: {:?}
                     keyboard.pressed(VirtualKeyCode::Space),
                     keyboard.down(VirtualKeyCode::Space),
                     keyboard.released(VirtualKeyCode::Space),
+                    keyboard.text(),
                     mouse.pressed(MouseButton::Left),
                     mouse.position(),
                     touch.first_touch(),
