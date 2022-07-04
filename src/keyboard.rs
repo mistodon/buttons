@@ -21,6 +21,7 @@ where
     keys_down: Vec<Key>,
     keys_pressed: Vec<Key>,
     keys_released: Vec<Key>,
+    text_buffer: String,
 }
 
 impl<Key, Mods> Default for Keyboard<Key, Mods>
@@ -34,6 +35,7 @@ where
             keys_down: Vec::with_capacity(4),
             keys_pressed: Vec::with_capacity(4),
             keys_released: Vec::with_capacity(4),
+            text_buffer: String::with_capacity(16),
         }
     }
 }
@@ -67,10 +69,16 @@ where
         self.keys_released.iter().any(|&k| k == key)
     }
 
+    /// Returns any text that has been entered.
+    pub fn text(&self) -> &str {
+        &self.text_buffer
+    }
+
     /// Clears the pressed state of held buttons. Should be called at end of frame.
     pub fn clear_presses(&mut self) -> &mut Self {
         self.keys_pressed.clear();
         self.keys_released.clear();
+        self.text_buffer.clear();
         self
     }
 
@@ -97,6 +105,18 @@ where
     /// Register that the current state of the modifier keys has changed.
     pub fn set_modifiers(&mut self, modifiers: Mods) -> &mut Self {
         self.modifiers = modifiers;
+        self
+    }
+
+    /// Register that some text was input.
+    pub fn receive_text(&mut self, text: &str) -> &mut Self {
+        self.text_buffer.push_str(text);
+        self
+    }
+
+    /// Register that a character of text was input.
+    pub fn receive_char(&mut self, ch: char) -> &mut Self {
+        self.text_buffer.push(ch);
         self
     }
 

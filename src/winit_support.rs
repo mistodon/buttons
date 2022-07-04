@@ -45,6 +45,9 @@ impl<'a, 'b, T> Event<WinitKeyboard> for WinitEvent<'b, T> {
                         };
                     }
                 }
+                WindowEvent::ReceivedCharacter(ch) => {
+                    keyboard.receive_char(*ch);
+                }
                 WindowEvent::ModifiersChanged(state) => {
                     keyboard.set_modifiers(*state);
                 }

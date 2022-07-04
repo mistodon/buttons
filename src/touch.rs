@@ -50,7 +50,7 @@ where
     }
 
     /// Register a touch event.
-    pub fn touch_event<I, P>(&mut self, id: I, position: [Coord; 2], phase: P)
+    pub fn touch_event<I, P>(&mut self, id: I, position: [Coord; 2], phase: P) -> &mut Self
     where
         I: Into<Id>,
         P: Into<TouchPhase>,
@@ -77,6 +77,7 @@ where
         }
 
         existing_touch.position = position;
+        self
     }
 
     /// Clears the tapped/released state of active touches. Should be called at the end of each frame.
