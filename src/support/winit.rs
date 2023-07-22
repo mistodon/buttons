@@ -26,7 +26,7 @@ pub fn touch() -> WinitTouchpad {
     Touchpad::new()
 }
 
-impl<'a, 'b, T> Event<WinitKeyboard> for WinitEvent<'b, T> {
+impl<'a, T> Event<WinitKeyboard> for WinitEvent<'a, T> {
     fn handle(&self, keyboard: &mut WinitKeyboard) {
         if let WinitEvent::WindowEvent { event, .. } = self {
             use winit::event::{ElementState, KeyboardInput};
@@ -57,7 +57,7 @@ impl<'a, 'b, T> Event<WinitKeyboard> for WinitEvent<'b, T> {
     }
 }
 
-impl<'a, 'b, T> Event<WinitMouse> for WinitEvent<'b, T> {
+impl<'a, T> Event<WinitMouse> for WinitEvent<'a, T> {
     fn handle(&self, mouse: &mut WinitMouse) {
         if let WinitEvent::WindowEvent { event, .. } = self {
             {
@@ -80,24 +80,21 @@ impl<'a, 'b, T> Event<WinitMouse> for WinitEvent<'b, T> {
     }
 }
 
-impl<'a, 'b, T> Event<Touchpad<u64, f64>> for WinitEvent<'b, T> {
+impl<'a, T> Event<Touchpad<u64, f64>> for WinitEvent<'a, T> {
     fn handle(&self, touchpad: &mut Touchpad<u64, f64>) {
         if let WinitEvent::WindowEvent { event, .. } = self {
             {
                 use winit::event::TouchPhase;
 
-                match event {
-                    WindowEvent::Touch(touch) => {
-                        let pos = [touch.location.x, touch.location.y];
-                        let phase = match touch.phase {
-                            TouchPhase::Started => crate::touch::TouchPhase::Start,
-                            TouchPhase::Ended => crate::touch::TouchPhase::End,
-                            TouchPhase::Moved => crate::touch::TouchPhase::Move,
-                            TouchPhase::Cancelled => crate::touch::TouchPhase::Cancel,
-                        };
-                        touchpad.touch_event(touch.id, pos, phase);
-                    }
-                    _ => (),
+                if let WindowEvent::Touch(touch) = event {
+                    let pos = [touch.location.x, touch.location.y];
+                    let phase = match touch.phase {
+                        TouchPhase::Started => crate::touch::TouchPhase::Start,
+                        TouchPhase::Ended => crate::touch::TouchPhase::End,
+                        TouchPhase::Moved => crate::touch::TouchPhase::Move,
+                        TouchPhase::Cancelled => crate::touch::TouchPhase::Cancel,
+                    };
+                    touchpad.touch_event(touch.id, pos, phase);
                 }
             }
         }
@@ -106,6 +103,7 @@ impl<'a, 'b, T> Event<Touchpad<u64, f64>> for WinitEvent<'b, T> {
 
 #[cfg(test)]
 #[allow(deprecated)]
+#[allow(invalid_value)]
 mod tests {
     use super::*;
     use crate::touch::TouchPhase;

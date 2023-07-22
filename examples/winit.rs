@@ -10,9 +10,9 @@ fn main() {
     let event_loop = EventLoop::<()>::new();
     let window_builder = WindowBuilder::new().with_title("buttons");
     let window = window_builder.build(&event_loop).unwrap();
-    let mut keyboard = buttons::winit_support::keyboard();
-    let mut mouse = buttons::winit_support::mouse();
-    let mut touch = buttons::winit_support::touch();
+    let mut keyboard = buttons::support::winit::keyboard();
+    let mut mouse = buttons::support::winit::mouse();
+    let mut touch = buttons::support::winit::touch();
 
     event_loop.run(move |event, _, control_flow| {
         keyboard.handle_event(&event);

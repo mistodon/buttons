@@ -18,9 +18,9 @@
 //! ```rust,no_run
 //! # use winit::event::{Event, VirtualKeyCode, MouseButton};
 //! let mut event_loop = winit::event_loop::EventLoop::new();
-//! let mut keyboard = buttons::winit_support::keyboard();
-//! let mut mouse = buttons::winit_support::mouse();
-//! let mut touch = buttons::winit_support::touch();
+//! let mut keyboard = buttons::support::winit::keyboard();
+//! let mut mouse = buttons::support::winit::mouse();
+//! let mut touch = buttons::support::winit::touch();
 //!
 //! // Track input
 //! event_loop.run(move |event, _, _| {
@@ -38,11 +38,7 @@
 //! });
 //! ```
 
-#[cfg(feature = "winit")]
-extern crate winit;
-
-#[cfg(feature = "winit")]
-pub mod winit_support;
+pub mod support;
 
 mod keyboard;
 mod mouse;

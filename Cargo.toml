@@ -1,6 +1,6 @@
 [package]
 name = "buttons"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Vi <violet@hey.com>"]
 description = "A simple API for storing and querying input state."
 edition = "2021"
@@ -15,12 +15,12 @@ license = "CC0-1.0"
 all-features = true
 
 [dependencies.winit]
-version = "~0.26.0"
+version = "0.27"
 optional = true
 
 [dev-dependencies.winit]
-version = "~0.26.0"
+version = "0.27"
 
 [features]
-default = []
+default = ["winit"]
 winit = ["dep:winit"]
