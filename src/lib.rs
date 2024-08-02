@@ -16,26 +16,26 @@
 //! # Examples
 //!
 //! ```rust,no_run
-//! # use winit::event::{Event, VirtualKeyCode, MouseButton};
-//! let mut event_loop = winit::event_loop::EventLoop::new();
-//! let mut keyboard = buttons::support::winit::keyboard();
-//! let mut mouse = buttons::support::winit::mouse();
-//! let mut touch = buttons::support::winit::touch();
+//! # // use winit::event::{Event, VirtualKeyCode, MouseButton};
+//! // let mut event_loop = winit::event_loop::EventLoop::new();
+//! // let mut keyboard = buttons::support::winit::keyboard();
+//! // let mut mouse = buttons::support::winit::mouse();
+//! // let mut touch = buttons::support::winit::touch();
 //!
 //! // Track input
-//! event_loop.run(move |event, _, _| {
-//!     keyboard.handle_event(&event);
-//!     mouse.handle_event(&event);
-//!     touch.handle_event(&event);
+//! // event_loop.run(move |event, _, _| {
+//! //     keyboard.handle_event(&event);
+//! //     mouse.handle_event(&event);
+//! //     touch.handle_event(&event);
 //!
-//!     // Check state
-//!     if keyboard.pressed(VirtualKeyCode::Escape)
-//!         || mouse.released(MouseButton::Right)
-//!         || touch.first_touch().is_some()
-//!     {
-//!         // Do something
-//!     }
-//! });
+//! //     // Check state
+//! //     if keyboard.pressed(VirtualKeyCode::Escape)
+//! //         || mouse.released(MouseButton::Right)
+//! //         || touch.first_touch().is_some()
+//! //     {
+//! //         // Do something
+//! //     }
+//! // });
 //! ```
 
 pub mod support;

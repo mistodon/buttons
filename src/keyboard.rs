@@ -14,8 +14,8 @@ pub struct Modifiers {
 #[derive(Debug, Clone)]
 pub struct Keyboard<Key, Mods>
 where
-    Key: Copy + PartialEq,
-    Mods: Copy + Default,
+    Key: Clone + PartialEq,
+    Mods: Clone + Default,
 {
     modifiers: Mods,
     keys_down: Vec<Key>,
@@ -26,8 +26,8 @@ where
 
 impl<Key, Mods> Default for Keyboard<Key, Mods>
 where
-    Key: Copy + PartialEq,
-    Mods: Copy + Default,
+    Key: Clone + PartialEq,
+    Mods: Clone + Default,
 {
     fn default() -> Self {
         Keyboard {
@@ -42,8 +42,8 @@ where
 
 impl<Key, Mods> Keyboard<Key, Mods>
 where
-    Key: Copy + PartialEq,
-    Mods: Copy + Default,
+    Key: Clone + PartialEq,
+    Mods: Clone + Default,
 {
     pub fn new() -> Self {
         Default::default()
@@ -51,22 +51,22 @@ where
 
     /// Returns the current state of the modifier keys.
     pub fn modifiers(&self) -> Mods {
-        self.modifiers
+        self.modifiers.clone()
     }
 
     /// Returns `true` if the given key is currently held down.
     pub fn down(&self, key: Key) -> bool {
-        self.keys_down.iter().any(|&k| k == key)
+        self.keys_down.iter().any(|k| k == &key)
     }
 
     /// Returns `true` if the given key was pressed this frame.
     pub fn pressed(&self, key: Key) -> bool {
-        self.keys_pressed.iter().any(|&k| k == key)
+        self.keys_pressed.iter().any(|k| k == &key)
     }
 
     /// Returns `true` if the given key was released this frame.
     pub fn released(&self, key: Key) -> bool {
-        self.keys_released.iter().any(|&k| k == key)
+        self.keys_released.iter().any(|k| k == &key)
     }
 
     /// Returns any text that has been entered.
@@ -84,10 +84,10 @@ where
 
     /// Register that a key was pressed down.
     pub fn press(&mut self, key: Key) -> &mut Self {
-        if !self.down(key) {
-            self.keys_down.push(key);
+        if !self.down(key.clone()) {
+            self.keys_down.push(key.clone());
         }
-        if !self.pressed(key) {
+        if !self.pressed(key.clone()) {
             self.keys_pressed.push(key);
         }
         self
@@ -95,8 +95,8 @@ where
 
     /// Register that a key was released.
     pub fn release(&mut self, key: Key) -> &mut Self {
-        self.keys_down.retain(|&k| k != key);
-        if !self.released(key) {
+        self.keys_down.retain(|k| k != &key);
+        if !self.released(key.clone()) {
             self.keys_released.push(key);
         }
         self
