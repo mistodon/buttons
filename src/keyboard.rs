@@ -50,23 +50,23 @@ where
     }
 
     /// Returns the current state of the modifier keys.
-    pub fn modifiers(&self) -> Mods {
-        self.modifiers.clone()
+    pub fn modifiers(&self) -> &Mods {
+        &self.modifiers
     }
 
     /// Returns `true` if the given key is currently held down.
-    pub fn down(&self, key: Key) -> bool {
-        self.keys_down.iter().any(|k| k == &key)
+    pub fn down(&self, key: &Key) -> bool {
+        self.keys_down.iter().any(|k| k == key)
     }
 
     /// Returns `true` if the given key was pressed this frame.
-    pub fn pressed(&self, key: Key) -> bool {
-        self.keys_pressed.iter().any(|k| k == &key)
+    pub fn pressed(&self, key: &Key) -> bool {
+        self.keys_pressed.iter().any(|k| k == key)
     }
 
     /// Returns `true` if the given key was released this frame.
-    pub fn released(&self, key: Key) -> bool {
-        self.keys_released.iter().any(|k| k == &key)
+    pub fn released(&self, key: &Key) -> bool {
+        self.keys_released.iter().any(|k| k == key)
     }
 
     /// Returns any text that has been entered.
@@ -83,28 +83,28 @@ where
     }
 
     /// Register that a key was pressed down.
-    pub fn press(&mut self, key: Key) -> &mut Self {
-        if !self.down(key.clone()) {
+    pub fn press(&mut self, key: &Key) -> &mut Self {
+        if !self.down(key) {
             self.keys_down.push(key.clone());
         }
-        if !self.pressed(key.clone()) {
-            self.keys_pressed.push(key);
+        if !self.pressed(key) {
+            self.keys_pressed.push(key.clone());
         }
         self
     }
 
     /// Register that a key was released.
-    pub fn release(&mut self, key: Key) -> &mut Self {
-        self.keys_down.retain(|k| k != &key);
-        if !self.released(key.clone()) {
-            self.keys_released.push(key);
+    pub fn release(&mut self, key: &Key) -> &mut Self {
+        self.keys_down.retain(|k| k != key);
+        if !self.released(key) {
+            self.keys_released.push(key.clone());
         }
         self
     }
 
     /// Register that the current state of the modifier keys has changed.
-    pub fn set_modifiers(&mut self, modifiers: Mods) -> &mut Self {
-        self.modifiers = modifiers;
+    pub fn set_modifiers(&mut self, modifiers: &Mods) -> &mut Self {
+        self.modifiers = modifiers.clone();
         self
     }
 
@@ -135,81 +135,81 @@ mod tests {
     #[test]
     fn key_not_pressed_or_released_by_default() {
         let keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        assert!(!keyboard.down(10));
-        assert!(!keyboard.pressed(10));
-        assert!(!keyboard.released(10));
+        assert!(!keyboard.down(&10));
+        assert!(!keyboard.pressed(&10));
+        assert!(!keyboard.released(&10));
     }
 
     #[test]
     fn key_down_when_pressed() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        keyboard.press(10);
-        assert!(keyboard.down(10));
+        keyboard.press(&10);
+        assert!(keyboard.down(&10));
     }
 
     #[test]
     fn key_not_down_when_released() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        keyboard.press(10).release(10);
-        assert!(!keyboard.down(10));
+        keyboard.press(&10).release(&10);
+        assert!(!keyboard.down(&10));
     }
 
     #[test]
     fn key_pressed_after_pressing() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        keyboard.press(10);
-        assert!(keyboard.pressed(10));
+        keyboard.press(&10);
+        assert!(keyboard.pressed(&10));
     }
 
     #[test]
     fn key_released_after_releasing() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        keyboard.release(10);
-        assert!(keyboard.released(10));
+        keyboard.release(&10);
+        assert!(keyboard.released(&10));
     }
 
     #[test]
     fn key_can_be_pressed_and_released_on_same_frame() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        keyboard.press(10).release(10);
-        assert!(keyboard.pressed(10));
-        assert!(keyboard.released(10));
+        keyboard.press(&10).release(&10);
+        assert!(keyboard.pressed(&10));
+        assert!(keyboard.released(&10));
     }
 
     #[test]
     fn key_pressed_resets_at_start_of_frame() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        keyboard.press(10);
+        keyboard.press(&10);
         keyboard.clear_presses();
-        assert!(!keyboard.pressed(10));
+        assert!(!keyboard.pressed(&10));
     }
 
     #[test]
     fn key_released_resets_at_start_of_frame() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        keyboard.release(10);
+        keyboard.release(&10);
         keyboard.clear_presses();
-        assert!(!keyboard.pressed(10));
+        assert!(!keyboard.pressed(&10));
     }
 
     #[test]
     fn key_down_persists_across_frames() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        keyboard.press(10);
+        keyboard.press(&10);
         keyboard.clear_presses();
-        assert!(keyboard.down(10));
+        assert!(keyboard.down(&10));
     }
 
     #[test]
     fn modifiers_empty_by_default() {
         let keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        assert_eq!(keyboard.modifiers(), Modifiers::default());
+        assert_eq!(keyboard.modifiers(), &Modifiers::default());
     }
 
     #[test]
     fn can_set_modifiers() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        keyboard.set_modifiers(Modifiers {
+        keyboard.set_modifiers(&Modifiers {
             ctrl: true,
             alt: true,
             shift: true,
@@ -218,7 +218,7 @@ mod tests {
 
         assert_eq!(
             keyboard.modifiers(),
-            Modifiers {
+            &Modifiers {
                 ctrl: true,
                 alt: true,
                 shift: true,
@@ -230,7 +230,7 @@ mod tests {
     #[test]
     fn modifiers_persisit_over_frames() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        keyboard.set_modifiers(Modifiers {
+        keyboard.set_modifiers(&Modifiers {
             ctrl: true,
             alt: true,
             shift: true,
@@ -240,7 +240,7 @@ mod tests {
         keyboard.clear_presses();
         assert_eq!(
             keyboard.modifiers(),
-            Modifiers {
+            &Modifiers {
                 ctrl: true,
                 alt: true,
                 shift: true,
