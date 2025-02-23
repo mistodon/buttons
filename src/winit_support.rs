@@ -39,9 +39,9 @@ impl<'a, 'b, T> Event<Keyboard<VirtualKeyCode, ModifiersState>> for WinitEvent<'
                         };
                     }
                 }
-                WindowEvent::ModifiersChanged(state) => {
-                    keyboard.set_modifiers(*state);
-                }
+                // WindowEvent::ModifiersChanged(state) => {
+                //     keyboard.set_modifiers(*state);
+                // }
                 _ => (),
             }
         }
