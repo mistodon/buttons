@@ -16,6 +16,14 @@
 //! # Examples
 //!
 //! ```rust,no_run
+//! # #[cfg(feature = "winit_0_21")]
+//! # use winit_0_21 as winit;
+//!
+//! # #[cfg(feature = "winit_0_24")]
+//! # use winit_0_24 as winit;
+//!
+//! # #[cfg(feature = "winit_0_27")]
+//! # use winit_0_27 as winit;
 //! # use winit::event::{Event, VirtualKeyCode, MouseButton};
 //! let mut event_loop = winit::event_loop::EventLoop::new();
 //! let mut keyboard = buttons::support::winit::keyboard();

@@ -12,15 +12,26 @@ categories = ["games"]
 license = "CC0-1.0"
 
 [package.metadata.docs.rs]
-all-features = true
+features = ["winit"]
 
-[dependencies.winit]
+[dependencies.winit_0_21]
+package = "winit"
+version = "0.21"
+optional = true
+
+[dependencies.winit_0_24]
+package = "winit"
+version = "0.24"
+optional = true
+
+[dependencies.winit_0_27]
+package = "winit"
 version = "0.27"
 optional = true
 
-[dev-dependencies.winit]
-version = "0.27"
-
 [features]
-default = ["winit"]
-winit = ["dep:winit"]
+default = []
+winit = ["winit_0_27"]
+winit_0_21 = ["dep:winit_0_21"]
+winit_0_24 = ["dep:winit_0_24"]
+winit_0_27 = ["dep:winit_0_27"]

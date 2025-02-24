@@ -1,3 +1,12 @@
+#[cfg(feature = "winit_0_21")]
+use winit_0_21 as winit;
+
+#[cfg(feature = "winit_0_24")]
+use winit_0_24 as winit;
+
+#[cfg(feature = "winit_0_27")]
+use winit_0_27 as winit;
+
 use winit::event::{Event as WinitEvent, ModifiersState, MouseButton, VirtualKeyCode, WindowEvent};
 
 use crate::{Event, Keyboard, Mouse, Touchpad};
@@ -48,6 +57,7 @@ impl<'a, T> Event<WinitKeyboard> for WinitEvent<'a, T> {
                 WindowEvent::ReceivedCharacter(ch) => {
                     keyboard.receive_char(*ch);
                 }
+                #[cfg(not(feature = "winit_0_21"))]
                 WindowEvent::ModifiersChanged(state) => {
                     keyboard.set_modifiers(*state);
                 }
