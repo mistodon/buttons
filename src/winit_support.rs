@@ -39,9 +39,10 @@ impl<'a, 'b, T> Event<Keyboard<VirtualKeyCode, ModifiersState>> for WinitEvent<'
                         };
                     }
                 }
-                // WindowEvent::ModifiersChanged(state) => {
-                //     keyboard.set_modifiers(*state);
-                // }
+                #[cfg(target_os = "macos")]
+                WindowEvent::ModifiersChanged(state) => {
+                    keyboard.set_modifiers(*state);
+                }
                 _ => (),
             }
         }
