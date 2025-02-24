@@ -1,9 +1,9 @@
 [package]
 name = "buttons"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Vi <violet@hey.com>"]
 description = "A simple API for storing and querying input state."
-edition = "2021"
+edition = "2024"
 homepage = "https://github.com/mistodon/buttons"
 repository = "https://github.com/mistodon/buttons"
 readme = "README.md"

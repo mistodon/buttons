@@ -35,7 +35,7 @@ pub fn touch() -> WinitTouchpad {
     Touchpad::new()
 }
 
-impl<'a, T> Event<WinitKeyboard> for WinitEvent<'a, T> {
+impl<T> Event<WinitKeyboard> for WinitEvent<'_, T> {
     fn handle(&self, keyboard: &mut WinitKeyboard) {
         if let WinitEvent::WindowEvent { event, .. } = self {
             use winit::event::{ElementState, KeyboardInput};
@@ -67,7 +67,7 @@ impl<'a, T> Event<WinitKeyboard> for WinitEvent<'a, T> {
     }
 }
 
-impl<'a, T> Event<WinitMouse> for WinitEvent<'a, T> {
+impl<T> Event<WinitMouse> for WinitEvent<'_, T> {
     fn handle(&self, mouse: &mut WinitMouse) {
         if let WinitEvent::WindowEvent { event, .. } = self {
             {
@@ -90,7 +90,7 @@ impl<'a, T> Event<WinitMouse> for WinitEvent<'a, T> {
     }
 }
 
-impl<'a, T> Event<Touchpad<u64, f64>> for WinitEvent<'a, T> {
+impl<T> Event<Touchpad<u64, f64>> for WinitEvent<'_, T> {
     fn handle(&self, touchpad: &mut Touchpad<u64, f64>) {
         if let WinitEvent::WindowEvent { event, .. } = self {
             {
