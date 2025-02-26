@@ -15,7 +15,7 @@
 //!
 //! # Examples
 //!
-//! ```rust,no_run
+//! ```rust,ignore
 //! # #[cfg(feature = "winit_0_21")]
 //! # use winit_0_21 as winit;
 //!
@@ -24,7 +24,15 @@
 //!
 //! # #[cfg(feature = "winit_0_27")]
 //! # use winit_0_27 as winit;
+//!
+//! # #[cfg(feature = "winit_0_29")]
+//! # use winit_0_29 as winit;
+//!
+//! # #[cfg(feature = "winit_0_30")]
+//! # use winit_0_30 as winit;
 //! # use winit::event::{Event, VirtualKeyCode, MouseButton};
+//! use buttons::prelude::*;
+//!
 //! let mut event_loop = winit::event_loop::EventLoop::new();
 //! let mut keyboard = buttons::support::winit::keyboard();
 //! let mut mouse = buttons::support::winit::mouse();
@@ -47,17 +55,22 @@
 //! ```
 
 pub mod support;
+pub mod prelude {
+    pub use crate::keyboard::KeyboardInterface;
+    pub use crate::mouse::MouseInterface;
+    pub use crate::touch::TouchInterface;
+}
 
 mod keyboard;
 mod mouse;
 mod touch;
 
-pub use crate::keyboard::Keyboard;
-pub use crate::mouse::Mouse;
-pub use crate::touch::Touchpad;
+pub use crate::keyboard::{Keyboard, KeyboardInterface};
+pub use crate::mouse::{Mouse, MouseInterface};
+pub use crate::touch::{Touch, TouchInterface, Touchpad};
 
 /// A trait for events that can modify input state.
-pub trait Event<Handler> {
+pub trait Event<Handler: ?Sized> {
     /// Modify the state of the provided handler (for example, a `Mouse` or
     /// `Keyboard`).
     ///
@@ -65,3 +78,18 @@ pub trait Event<Handler> {
     /// the handler's `handle_event` method.
     fn handle(&self, handler: &mut Handler);
 }
+
+#[cfg(feature = "winit_0_21")]
+pub(crate) use winit_0_21 as winit;
+
+#[cfg(feature = "winit_0_24")]
+pub(crate) use winit_0_24 as winit;
+
+#[cfg(feature = "winit_0_27")]
+pub(crate) use winit_0_27 as winit;
+
+#[cfg(feature = "winit_0_29")]
+pub(crate) use winit_0_29 as winit;
+
+#[cfg(feature = "winit_0_30")]
+pub(crate) use winit_0_30 as winit;

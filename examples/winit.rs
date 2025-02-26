@@ -7,15 +7,35 @@ use winit_0_24 as winit;
 #[cfg(feature = "winit_0_27")]
 use winit_0_27 as winit;
 
-#[cfg(any(feature = "winit_0_21", feature = "winit_0_24", feature = "winit_0_27"))]
+#[cfg(feature = "winit_0_29")]
+use winit_0_29 as winit;
+
+#[cfg(feature = "winit_0_30")]
+use winit_0_30 as winit;
+
+#[cfg(any(
+    feature = "winit_0_21",
+    feature = "winit_0_24",
+    feature = "winit_0_27",
+    // feature = "winit_0_29",
+    // feature = "winit_0_30"
+))]
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
 
-#[cfg(any(feature = "winit_0_21", feature = "winit_0_24", feature = "winit_0_27"))]
+#[cfg(any(
+    feature = "winit_0_21",
+    feature = "winit_0_24",
+    feature = "winit_0_27",
+    // feature = "winit_0_29",
+    // feature = "winit_0_30"
+))]
 fn main() {
+    use buttons::prelude::*;
+
     let event_loop = EventLoop::<()>::new();
     let window_builder = WindowBuilder::new().with_title("buttons");
     let window = window_builder.build(&event_loop).unwrap();
@@ -71,5 +91,11 @@ primary touch: {:?}
     });
 }
 
-#[cfg(not(any(feature = "winit_0_21", feature = "winit_0_24", feature = "winit_0_27")))]
+#[cfg(not(any(
+    feature = "winit_0_21",
+    feature = "winit_0_24",
+    feature = "winit_0_27",
+    // feature = "winit_0_29",
+    // feature = "winit_0_30"
+)))]
 fn main() {}

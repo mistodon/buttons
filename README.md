@@ -2,7 +2,7 @@ buttons
 ===
 
 [![Crates.io](https://img.shields.io/crates/v/buttons.svg)](https://crates.io/crates/buttons)
-[![Docs.rs](https://docs.rs/buttons/badge.svg)](https://docs.rs/buttons/0.4.0/buttons/)
+[![Docs.rs](https://docs.rs/buttons/badge.svg)](https://docs.rs/buttons/0.6.0/buttons/)
 
 A simple Rust crate for managing and querying input state.
 

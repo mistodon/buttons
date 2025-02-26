@@ -1,5 +1,51 @@
 use crate::Event;
+
+use smallvec::SmallVec;
+
 use std::ops::Add;
+
+/// A trait for objects that can represent the state of a mouse.
+pub trait MouseInterface {
+    /// A type representing a mouse button.
+    type Button;
+
+    /// The numeric type used for pointer coordinates.
+    type Coord;
+
+    /// Returns the position of the mouse pointer.
+    fn position(&self) -> [Self::Coord; 2];
+
+    /// Returns `true` if the given button is currently held down.
+    fn down(&self, button: Self::Button) -> bool;
+
+    /// Returns `true` if the given button was pressed this frame.
+    fn pressed(&self, button: Self::Button) -> bool;
+
+    /// Returns `true` if the given button was released this frame.
+    fn released(&self, button: Self::Button) -> bool;
+
+    /// Clears the pressed state of held buttons. Should be called at end of frame.
+    fn clear_presses(&mut self) -> &mut Self;
+
+    /// Set the position of the mouse to the given value.
+    fn move_to(&mut self, position: [Self::Coord; 2]) -> &mut Self;
+
+    /// Modify the position of the mouse by the given offset.
+    fn move_by(&mut self, delta_position: [Self::Coord; 2]) -> &mut Self;
+
+    /// Register that a button was pressed down.
+    fn press(&mut self, button: Self::Button) -> &mut Self;
+
+    /// Register that a button was released.
+    fn release(&mut self, button: Self::Button) -> &mut Self;
+
+    /// Convenience method for handling events. The type of event, `E`, will
+    /// vary depending on the windowing library being used.
+    fn handle_event<E: Event<Self>>(&mut self, event: &E) -> &mut Self {
+        event.handle(self);
+        self
+    }
+}
 
 /// A structure representing the current state of a mouse.
 #[derive(Debug, Clone)]
@@ -9,9 +55,9 @@ where
     Coord: Copy + Default + Add<Output = Coord>,
 {
     position: [Coord; 2],
-    buttons_down: Vec<Button>,
-    buttons_pressed: Vec<Button>,
-    buttons_released: Vec<Button>,
+    buttons_down: SmallVec<[Button; 4]>,
+    buttons_pressed: SmallVec<[Button; 4]>,
+    buttons_released: SmallVec<[Button; 4]>,
 }
 
 impl<Button, Coord> Default for Mouse<Button, Coord>
@@ -20,12 +66,7 @@ where
     Coord: Copy + Default + Add<Output = Coord>,
 {
     fn default() -> Self {
-        Mouse {
-            position: Default::default(),
-            buttons_down: Vec::with_capacity(4),
-            buttons_pressed: Vec::with_capacity(4),
-            buttons_released: Vec::with_capacity(4),
-        }
+        Self::new()
     }
 }
 
@@ -35,7 +76,12 @@ where
     Coord: Copy + Default + Add<Output = Coord>,
 {
     pub fn new() -> Self {
-        Self::default()
+        Mouse {
+            position: Default::default(),
+            buttons_down: Default::default(),
+            buttons_pressed: Default::default(),
+            buttons_released: Default::default(),
+        }
     }
 
     /// Create the Mouse at a specific pointer position.
@@ -45,49 +91,50 @@ where
             ..Default::default()
         }
     }
+}
 
-    /// Returns the position of the mouse pointer.
-    pub fn position(&self) -> [Coord; 2] {
+impl<B, C> MouseInterface for Mouse<B, C>
+where
+    B: Copy + PartialEq,
+    C: Copy + Default + Add<Output = C>,
+{
+    type Button = B;
+    type Coord = C;
+
+    fn position(&self) -> [Self::Coord; 2] {
         self.position
     }
 
-    /// Returns `true` if the given button is currently held down.
-    pub fn down(&self, button: Button) -> bool {
+    fn down(&self, button: Self::Button) -> bool {
         self.buttons_down.iter().any(|&b| b == button)
     }
 
-    /// Returns `true` if the given button was pressed this frame.
-    pub fn pressed(&self, button: Button) -> bool {
+    fn pressed(&self, button: Self::Button) -> bool {
         self.buttons_pressed.iter().any(|&b| b == button)
     }
 
-    /// Returns `true` if the given button was released this frame.
-    pub fn released(&self, button: Button) -> bool {
+    fn released(&self, button: Self::Button) -> bool {
         self.buttons_released.iter().any(|&b| b == button)
     }
 
-    /// Clears the pressed state of held buttons. Should be called at end of frame.
-    pub fn clear_presses(&mut self) -> &mut Self {
+    fn clear_presses(&mut self) -> &mut Self {
         self.buttons_pressed.clear();
         self.buttons_released.clear();
         self
     }
 
-    /// Set the position of the mouse to the given value.
-    pub fn move_to(&mut self, position: [Coord; 2]) -> &mut Self {
+    fn move_to(&mut self, position: [Self::Coord; 2]) -> &mut Self {
         self.position = position;
         self
     }
 
-    /// Modify the position of the mouse by the given offset.
-    pub fn move_by(&mut self, [x, y]: [Coord; 2]) -> &mut Self {
+    fn move_by(&mut self, [x, y]: [Self::Coord; 2]) -> &mut Self {
         let [ox, oy] = self.position;
         self.position = [ox + x, oy + y];
         self
     }
 
-    /// Register that a button was pressed down.
-    pub fn press(&mut self, button: Button) -> &mut Self {
+    fn press(&mut self, button: Self::Button) -> &mut Self {
         if !self.down(button) {
             self.buttons_down.push(button);
         }
@@ -97,19 +144,11 @@ where
         self
     }
 
-    /// Register that a button was released.
-    pub fn release(&mut self, button: Button) -> &mut Self {
-        self.buttons_down.retain(|&b| b != button);
+    fn release(&mut self, button: Self::Button) -> &mut Self {
+        self.buttons_down.retain(|b| b != &button);
         if !self.released(button) {
             self.buttons_released.push(button);
         }
-        self
-    }
-
-    /// Convenience method for handling events. The type of event, `E`, will
-    /// vary depending on the windowing library being used.
-    pub fn handle_event<E: Event<Self>>(&mut self, event: &E) -> &mut Self {
-        event.handle(self);
         self
     }
 }

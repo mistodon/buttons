@@ -1,6 +1,64 @@
 use crate::Event;
 use std::ops::Add;
 
+/// Represents an active touch on the touch device.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Touch<Id, Coord>
+where
+    Id: PartialEq,
+    Coord: Copy + Default + Add<Output = Coord>,
+{
+    pub id: Id,
+    pub position: [Coord; 2],
+    pub tapped: bool,
+    pub released: bool,
+}
+
+/// The phase of a touch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TouchPhase {
+    Start,
+    End,
+    Cancel,
+    Move,
+}
+
+/// A trait for objects that can represent the state of a touch device.
+pub trait TouchInterface {
+    /// A type that can uniquely represent a touch.
+    type TouchId: PartialEq;
+
+    /// The numeric type used for touch coordinates.
+    type Coord: Copy + Default + Add<Output = Self::Coord>;
+
+    /// Returns a reference to the first registered touch, if any.
+    fn first_touch(&self) -> Option<&Touch<Self::TouchId, Self::Coord>>;
+
+    /// Returns a touch by its `id`, if it exists.
+    fn touch<I: AsRef<Self::TouchId>>(&self, id: I) -> Option<&Touch<Self::TouchId, Self::Coord>>;
+
+    /// Returns an iterator over all active touches.
+    ///
+    /// (This includes touches that have been released this frame.)
+    fn touches(&self) -> impl Iterator<Item = &Touch<Self::TouchId, Self::Coord>>;
+
+    /// Register a touch event.
+    fn touch_event<I, P>(&mut self, id: I, position: [Self::Coord; 2], phase: P) -> &mut Self
+    where
+        I: Into<Self::TouchId>,
+        P: Into<TouchPhase>;
+
+    /// Clears the tapped/released state of active touches. Should be called at the end of each frame.
+    fn clear_taps(&mut self) -> &mut Self;
+
+    /// Convenience method for handling events. The type of event, `E`, will
+    /// vary depending on the windowing library being used.
+    fn handle_event<E: Event<Self>>(&mut self, event: &E) -> &mut Self {
+        event.handle(self);
+        self
+    }
+}
+
 /// A structure representing the current state of touches on a touch device.
 #[derive(Debug, Clone)]
 pub struct Touchpad<Id, Coord>
@@ -17,9 +75,7 @@ where
     Coord: Copy + Default + Add<Output = Coord>,
 {
     fn default() -> Self {
-        Touchpad {
-            touches: Vec::with_capacity(4),
-        }
+        Self::new()
     }
 }
 
@@ -29,30 +85,35 @@ where
     Coord: Copy + Default + Add<Output = Coord>,
 {
     pub fn new() -> Self {
-        Self::default()
+        Touchpad {
+            touches: Vec::with_capacity(4),
+        }
     }
+}
 
-    /// Returns a reference to the first registered touch, if any.
-    pub fn first_touch(&self) -> Option<&Touch<Id, Coord>> {
+impl<Id, C> TouchInterface for Touchpad<Id, C>
+where
+    Id: PartialEq,
+    C: Copy + Default + Add<Output = C>,
+{
+    type TouchId = Id;
+    type Coord = C;
+
+    fn first_touch(&self) -> Option<&Touch<Self::TouchId, Self::Coord>> {
         self.touches.first()
     }
 
-    /// Returns a touch by its `id`, if it exists.
-    pub fn touch<I: AsRef<Id>>(&self, id: I) -> Option<&Touch<Id, Coord>> {
+    fn touch<I: AsRef<Self::TouchId>>(&self, id: I) -> Option<&Touch<Self::TouchId, Self::Coord>> {
         self.touches.iter().find(|t| &t.id == id.as_ref())
     }
 
-    /// Returns an iterator over all active touches.
-    ///
-    /// (This includes touches that have been released this frame.)
-    pub fn touches(&self) -> impl Iterator<Item = &Touch<Id, Coord>> {
+    fn touches(&self) -> impl Iterator<Item = &Touch<Self::TouchId, Self::Coord>> {
         self.touches.iter()
     }
 
-    /// Register a touch event.
-    pub fn touch_event<I, P>(&mut self, id: I, position: [Coord; 2], phase: P) -> &mut Self
+    fn touch_event<I, P>(&mut self, id: I, position: [Self::Coord; 2], phase: P) -> &mut Self
     where
-        I: Into<Id>,
+        I: Into<Self::TouchId>,
         P: Into<TouchPhase>,
     {
         let id = id.into();
@@ -80,39 +141,11 @@ where
         self
     }
 
-    /// Clears the tapped/released state of active touches. Should be called at the end of each frame.
-    pub fn clear_taps(&mut self) -> &mut Self {
+    fn clear_taps(&mut self) -> &mut Self {
         for touch in &mut self.touches {
             touch.tapped = false;
         }
         self.touches.retain(|t| !t.released);
         self
     }
-
-    /// Convenience method for handling events. The type of event, `E`, will
-    /// vary depending on the windowing library being used.
-    pub fn handle_event<E: Event<Self>>(&mut self, event: &E) -> &mut Self {
-        event.handle(self);
-        self
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Touch<Id, Coord>
-where
-    Id: PartialEq,
-    Coord: Copy + Default + Add<Output = Coord>,
-{
-    pub id: Id,
-    pub position: [Coord; 2],
-    pub tapped: bool,
-    pub released: bool,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TouchPhase {
-    Start,
-    End,
-    Cancel,
-    Move,
 }

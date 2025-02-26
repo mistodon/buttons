@@ -1,4 +1,56 @@
+use smallvec::SmallVec;
+use smol_str::{SmolStr, SmolStrBuilder};
+
 use crate::Event;
+
+/// A trait for objects that can represent the state of a keyboard.
+pub trait KeyboardInterface {
+    /// A type representing a key on a keyboard.
+    type Key;
+
+    /// A type representing the current state of modifier keys.
+    type Mods;
+
+    /// Returns the current state of the modifier keys.
+    fn modifiers(&self) -> Self::Mods;
+
+    /// Returns `true` if the given key is currently held down.
+    fn down(&self, key: Self::Key) -> bool;
+
+    /// Returns `true` if the given key was pressed this frame.
+    fn pressed(&self, key: Self::Key) -> bool;
+
+    /// Returns `true` if the given key was released this frame.
+    fn released(&self, key: Self::Key) -> bool;
+
+    /// Returns any text that has been entered.
+    fn text(&self) -> &str;
+
+    /// Clears the pressed state of held buttons. Should be called at end of frame.
+    fn clear_presses(&mut self) -> &mut Self;
+
+    /// Register that a key was pressed down.
+    fn press(&mut self, key: Self::Key) -> &mut Self;
+
+    /// Register that a key was released.
+    fn release(&mut self, key: Self::Key) -> &mut Self;
+
+    /// Register that the current state of the modifier keys has changed.
+    fn set_modifiers(&mut self, modifiers: Self::Mods) -> &mut Self;
+
+    /// Register that some text was input.
+    fn receive_text<S: AsRef<str>>(&mut self, text: S) -> &mut Self;
+
+    /// Register that a character of text was input.
+    fn receive_char(&mut self, ch: char) -> &mut Self;
+
+    /// Convenience method for handling events. The type of event, `E`, will
+    /// vary depending on the windowing library being used.
+    fn handle_event<E: Event<Self>>(&mut self, event: &E) -> &mut Self {
+        event.handle(self);
+        self
+    }
+}
 
 /// The current state of the modifier keys. You can use this if the windowing
 /// library you are using doesn't have an equivalent.
@@ -18,26 +70,11 @@ where
     Mods: Copy + Default,
 {
     modifiers: Mods,
-    keys_down: Vec<Key>,
-    keys_pressed: Vec<Key>,
-    keys_released: Vec<Key>,
-    text_buffer: String,
-}
-
-impl<Key, Mods> Default for Keyboard<Key, Mods>
-where
-    Key: Copy + PartialEq,
-    Mods: Copy + Default,
-{
-    fn default() -> Self {
-        Keyboard {
-            modifiers: Default::default(),
-            keys_down: Vec::with_capacity(4),
-            keys_pressed: Vec::with_capacity(4),
-            keys_released: Vec::with_capacity(4),
-            text_buffer: String::with_capacity(16),
-        }
-    }
+    keys_down: SmallVec<[Key; 8]>,
+    keys_pressed: SmallVec<[Key; 8]>,
+    keys_released: SmallVec<[Key; 8]>,
+    text_buffer_builder: SmolStrBuilder,
+    text_buffer: SmolStr,
 }
 
 impl<Key, Mods> Keyboard<Key, Mods>
@@ -46,44 +83,64 @@ where
     Mods: Copy + Default,
 {
     pub fn new() -> Self {
-        Default::default()
+        Keyboard {
+            modifiers: Default::default(),
+            keys_down: Default::default(),
+            keys_pressed: Default::default(),
+            keys_released: Default::default(),
+            text_buffer_builder: Default::default(),
+            text_buffer: Default::default(),
+        }
     }
+}
 
-    /// Returns the current state of the modifier keys.
-    pub fn modifiers(&self) -> Mods {
+impl<Key, Mods> Default for Keyboard<Key, Mods>
+where
+    Key: Copy + PartialEq,
+    Mods: Copy + Default,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<K, M> KeyboardInterface for Keyboard<K, M>
+where
+    K: Copy + PartialEq,
+    M: Copy + Default,
+{
+    type Key = K;
+    type Mods = M;
+
+    fn modifiers(&self) -> Self::Mods {
         self.modifiers
     }
 
-    /// Returns `true` if the given key is currently held down.
-    pub fn down(&self, key: Key) -> bool {
+    fn down(&self, key: Self::Key) -> bool {
         self.keys_down.iter().any(|&k| k == key)
     }
 
-    /// Returns `true` if the given key was pressed this frame.
-    pub fn pressed(&self, key: Key) -> bool {
+    fn pressed(&self, key: Self::Key) -> bool {
         self.keys_pressed.iter().any(|&k| k == key)
     }
 
-    /// Returns `true` if the given key was released this frame.
-    pub fn released(&self, key: Key) -> bool {
+    fn released(&self, key: Self::Key) -> bool {
         self.keys_released.iter().any(|&k| k == key)
     }
 
-    /// Returns any text that has been entered.
-    pub fn text(&self) -> &str {
+    fn text(&self) -> &str {
         &self.text_buffer
     }
 
-    /// Clears the pressed state of held buttons. Should be called at end of frame.
-    pub fn clear_presses(&mut self) -> &mut Self {
+    fn clear_presses(&mut self) -> &mut Self {
         self.keys_pressed.clear();
         self.keys_released.clear();
-        self.text_buffer.clear();
+        self.text_buffer_builder = SmolStrBuilder::default();
+        self.text_buffer = SmolStr::default();
         self
     }
 
-    /// Register that a key was pressed down.
-    pub fn press(&mut self, key: Key) -> &mut Self {
+    fn press(&mut self, key: Self::Key) -> &mut Self {
         if !self.down(key) {
             self.keys_down.push(key);
         }
@@ -93,37 +150,28 @@ where
         self
     }
 
-    /// Register that a key was released.
-    pub fn release(&mut self, key: Key) -> &mut Self {
-        self.keys_down.retain(|&k| k != key);
+    fn release(&mut self, key: Self::Key) -> &mut Self {
+        self.keys_down.retain(|k| k != &key);
         if !self.released(key) {
             self.keys_released.push(key);
         }
         self
     }
 
-    /// Register that the current state of the modifier keys has changed.
-    pub fn set_modifiers(&mut self, modifiers: Mods) -> &mut Self {
+    fn set_modifiers(&mut self, modifiers: Self::Mods) -> &mut Self {
         self.modifiers = modifiers;
         self
     }
 
-    /// Register that some text was input.
-    pub fn receive_text(&mut self, text: &str) -> &mut Self {
-        self.text_buffer.push_str(text);
+    fn receive_text<S: AsRef<str>>(&mut self, text: S) -> &mut Self {
+        self.text_buffer_builder.push_str(text.as_ref());
+        self.text_buffer = self.text_buffer_builder.finish();
         self
     }
 
-    /// Register that a character of text was input.
-    pub fn receive_char(&mut self, ch: char) -> &mut Self {
-        self.text_buffer.push(ch);
-        self
-    }
-
-    /// Convenience method for handling events. The type of event, `E`, will
-    /// vary depending on the windowing library being used.
-    pub fn handle_event<E: Event<Self>>(&mut self, event: &E) -> &mut Self {
-        event.handle(self);
+    fn receive_char(&mut self, ch: char) -> &mut Self {
+        self.text_buffer_builder.push(ch);
+        self.text_buffer = self.text_buffer_builder.finish();
         self
     }
 }

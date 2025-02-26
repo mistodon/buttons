@@ -2,9 +2,19 @@
 
 set -e
 
-echo -e "\033[36;1mRunning tests:\033[0m"
+#echo -e "\033[36;1mRunning tests (winit 0.21):\033[0m"
+#cargo test --features winit_0_21 (fails on M1 macs)
+echo -e "\033[36;1mRunning tests (winit 0.24):\033[0m"
 cargo test --features winit_0_24
+
+echo -e "\033[36;1mRunning tests (winit 0.27):\033[0m"
 cargo test --features winit_0_27
+
+echo -e "\033[36;1mRunning tests (winit 0.29):\033[0m"
+cargo test --features winit_0_29
+
+echo -e "\033[36;1mRunning tests (winit 0.30):\033[0m"
+cargo test --features winit_0_30
 
 echo -e "\033[36;1mRunning rustfmt:\033[0m"
 cargo fmt -- --check
