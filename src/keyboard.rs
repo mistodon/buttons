@@ -3,6 +3,7 @@ use smol_str::{SmolStr, SmolStrBuilder};
 
 use crate::Event;
 
+// TODO: All these traits should take values by reference :')
 /// A trait for objects that can represent the state of a keyboard.
 pub trait KeyboardInterface {
     /// A type representing a key on a keyboard.
@@ -11,17 +12,17 @@ pub trait KeyboardInterface {
     /// A type representing the current state of modifier keys.
     type Mods;
 
-    /// Returns the current state of the modifier keys.
-    fn modifiers(&self) -> Self::Mods;
+    /// Returns the current state of the modifier keys, if present.
+    fn modifiers(&self) -> Option<&Self::Mods>;
 
     /// Returns `true` if the given key is currently held down.
-    fn down(&self, key: Self::Key) -> bool;
+    fn down(&self, key: &Self::Key) -> bool;
 
     /// Returns `true` if the given key was pressed this frame.
-    fn pressed(&self, key: Self::Key) -> bool;
+    fn pressed(&self, key: &Self::Key) -> bool;
 
     /// Returns `true` if the given key was released this frame.
-    fn released(&self, key: Self::Key) -> bool;
+    fn released(&self, key: &Self::Key) -> bool;
 
     /// Returns any text that has been entered.
     fn text(&self) -> &str;
@@ -66,10 +67,13 @@ pub struct Modifiers {
 #[derive(Debug, Clone)]
 pub struct Keyboard<Key, Mods>
 where
-    Key: Copy + PartialEq,
-    Mods: Copy + Default,
+    // TODO: We should be able to relax these:
+    // - If we store some flag other than a `Key` in keys_pressed/keys_released we can remove Clone for key
+    // - If we rethink the `modifiers` API, we might be able to do away with Clone (but we don't necessarily want to force all implementations to own a Mods and return a ref)
+    // - If we make modifiers optional, we can ditch the Default
+    Key: Clone + PartialEq,
 {
-    modifiers: Mods,
+    modifiers: Option<Mods>,
     keys_down: SmallVec<[Key; 8]>,
     keys_pressed: SmallVec<[Key; 8]>,
     keys_released: SmallVec<[Key; 8]>,
@@ -79,8 +83,7 @@ where
 
 impl<Key, Mods> Keyboard<Key, Mods>
 where
-    Key: Copy + PartialEq,
-    Mods: Copy + Default,
+    Key: Clone + PartialEq,
 {
     pub fn new() -> Self {
         Keyboard {
@@ -96,8 +99,7 @@ where
 
 impl<Key, Mods> Default for Keyboard<Key, Mods>
 where
-    Key: Copy + PartialEq,
-    Mods: Copy + Default,
+    Key: Clone + PartialEq,
 {
     fn default() -> Self {
         Self::new()
@@ -106,26 +108,25 @@ where
 
 impl<K, M> KeyboardInterface for Keyboard<K, M>
 where
-    K: Copy + PartialEq,
-    M: Copy + Default,
+    K: Clone + PartialEq,
 {
     type Key = K;
     type Mods = M;
 
-    fn modifiers(&self) -> Self::Mods {
-        self.modifiers
+    fn modifiers(&self) -> Option<&Self::Mods> {
+        self.modifiers.as_ref()
     }
 
-    fn down(&self, key: Self::Key) -> bool {
-        self.keys_down.iter().any(|&k| k == key)
+    fn down(&self, key: &Self::Key) -> bool {
+        self.keys_down.iter().any(|k| k == key)
     }
 
-    fn pressed(&self, key: Self::Key) -> bool {
-        self.keys_pressed.iter().any(|&k| k == key)
+    fn pressed(&self, key: &Self::Key) -> bool {
+        self.keys_pressed.iter().any(|k| k == key)
     }
 
-    fn released(&self, key: Self::Key) -> bool {
-        self.keys_released.iter().any(|&k| k == key)
+    fn released(&self, key: &Self::Key) -> bool {
+        self.keys_released.iter().any(|k| k == key)
     }
 
     fn text(&self) -> &str {
@@ -141,10 +142,10 @@ where
     }
 
     fn press(&mut self, key: Self::Key) -> &mut Self {
-        if !self.down(key) {
-            self.keys_down.push(key);
+        if !self.down(&key) {
+            self.keys_down.push(key.clone());
         }
-        if !self.pressed(key) {
+        if !self.pressed(&key) {
             self.keys_pressed.push(key);
         }
         self
@@ -152,14 +153,14 @@ where
 
     fn release(&mut self, key: Self::Key) -> &mut Self {
         self.keys_down.retain(|k| k != &key);
-        if !self.released(key) {
+        if !self.released(&key) {
             self.keys_released.push(key);
         }
         self
     }
 
     fn set_modifiers(&mut self, modifiers: Self::Mods) -> &mut Self {
-        self.modifiers = modifiers;
+        self.modifiers = Some(modifiers);
         self
     }
 
@@ -183,45 +184,45 @@ mod tests {
     #[test]
     fn key_not_pressed_or_released_by_default() {
         let keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        assert!(!keyboard.down(10));
-        assert!(!keyboard.pressed(10));
-        assert!(!keyboard.released(10));
+        assert!(!keyboard.down(&10));
+        assert!(!keyboard.pressed(&10));
+        assert!(!keyboard.released(&10));
     }
 
     #[test]
     fn key_down_when_pressed() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
         keyboard.press(10);
-        assert!(keyboard.down(10));
+        assert!(keyboard.down(&10));
     }
 
     #[test]
     fn key_not_down_when_released() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
         keyboard.press(10).release(10);
-        assert!(!keyboard.down(10));
+        assert!(!keyboard.down(&10));
     }
 
     #[test]
     fn key_pressed_after_pressing() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
         keyboard.press(10);
-        assert!(keyboard.pressed(10));
+        assert!(keyboard.pressed(&10));
     }
 
     #[test]
     fn key_released_after_releasing() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
         keyboard.release(10);
-        assert!(keyboard.released(10));
+        assert!(keyboard.released(&10));
     }
 
     #[test]
     fn key_can_be_pressed_and_released_on_same_frame() {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
         keyboard.press(10).release(10);
-        assert!(keyboard.pressed(10));
-        assert!(keyboard.released(10));
+        assert!(keyboard.pressed(&10));
+        assert!(keyboard.released(&10));
     }
 
     #[test]
@@ -229,7 +230,7 @@ mod tests {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
         keyboard.press(10);
         keyboard.clear_presses();
-        assert!(!keyboard.pressed(10));
+        assert!(!keyboard.pressed(&10));
     }
 
     #[test]
@@ -237,7 +238,7 @@ mod tests {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
         keyboard.release(10);
         keyboard.clear_presses();
-        assert!(!keyboard.pressed(10));
+        assert!(!keyboard.pressed(&10));
     }
 
     #[test]
@@ -245,13 +246,13 @@ mod tests {
         let mut keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
         keyboard.press(10);
         keyboard.clear_presses();
-        assert!(keyboard.down(10));
+        assert!(keyboard.down(&10));
     }
 
     #[test]
     fn modifiers_empty_by_default() {
         let keyboard: Keyboard<usize, Modifiers> = Keyboard::new();
-        assert_eq!(keyboard.modifiers(), Modifiers::default());
+        assert_eq!(keyboard.modifiers(), None);
     }
 
     #[test]
@@ -266,12 +267,12 @@ mod tests {
 
         assert_eq!(
             keyboard.modifiers(),
-            Modifiers {
+            Some(&Modifiers {
                 ctrl: true,
                 alt: true,
                 shift: true,
                 logo: true,
-            }
+            })
         )
     }
 
@@ -288,12 +289,12 @@ mod tests {
         keyboard.clear_presses();
         assert_eq!(
             keyboard.modifiers(),
-            Modifiers {
+            Some(&Modifiers {
                 ctrl: true,
                 alt: true,
                 shift: true,
                 logo: true,
-            }
+            })
         )
     }
 }

@@ -1,21 +1,28 @@
+//! Type aliases for input devices that work with `winit`.
+
 use crate::winit::{
     self,
     event::{Event as WinitEvent, WindowEvent},
 };
 use crate::{Event, Keyboard, Mouse, Touchpad, prelude::*};
 
+/// Alias for a type that represents a keyboard key code.
 #[cfg(any(feature = "winit_0_29", feature = "winit_0_30"))]
 pub type WinitKey = winit::keyboard::KeyCode;
 
+/// Alias for a type that represents a keyboard key code.
 #[cfg(not(any(feature = "winit_0_29", feature = "winit_0_30")))]
 pub type WinitKey = winit::event::VirtualKeyCode;
 
+/// Alias for a type that represents the state of keyboard modifiers.
 #[cfg(any(feature = "winit_0_29", feature = "winit_0_30"))]
 pub type WinitMods = winit::event::Modifiers;
 
+/// Alias for a type that represents the state of keyboard modifiers.
 #[cfg(not(any(feature = "winit_0_29", feature = "winit_0_30")))]
 pub type WinitMods = winit::event::ModifiersState;
 
+/// Alias for a type that represents a mouse button.
 pub type WinitMouseButton = winit::event::MouseButton;
 
 /// Alias for a `Keyboard` that can represent `winit` keyboard state.
@@ -389,7 +396,7 @@ mod tests {
         let mut keyboard = keyboard();
         keyboard.handle_event(&event);
 
-        assert!(keyboard.pressed(TEST_KEY));
+        assert!(keyboard.pressed(&TEST_KEY));
     }
 
     #[test]
@@ -399,7 +406,7 @@ mod tests {
         let mut keyboard = keyboard();
         keyboard.handle_event(&event);
 
-        assert!(keyboard.released(TEST_KEY));
+        assert!(keyboard.released(&TEST_KEY));
     }
 
     #[test]
@@ -410,7 +417,7 @@ mod tests {
         keyboard.handle_event(&event);
 
         let modifiers = WinitMods::CTRL;
-        assert_eq!(keyboard.modifiers(), modifiers);
+        assert_eq!(keyboard.modifiers(), Some(&modifiers));
     }
 
     #[test]
@@ -421,7 +428,7 @@ mod tests {
         keyboard.handle_event(&event);
 
         let modifiers = WinitMods::default();
-        assert_eq!(keyboard.modifiers(), modifiers);
+        assert_eq!(keyboard.modifiers(), Some(&modifiers));
     }
 
     #[test]
@@ -430,7 +437,7 @@ mod tests {
         let mut mouse = mouse();
         mouse.handle_event(&event);
 
-        assert!(mouse.pressed(WinitMouseButton::Right));
+        assert!(mouse.pressed(&WinitMouseButton::Right));
     }
 
     #[test]
@@ -439,7 +446,7 @@ mod tests {
         let mut mouse = mouse();
         mouse.handle_event(&event);
 
-        assert!(mouse.released(WinitMouseButton::Right));
+        assert!(mouse.released(&WinitMouseButton::Right));
     }
 
     #[test]

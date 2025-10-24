@@ -16,13 +16,13 @@ pub trait MouseInterface {
     fn position(&self) -> [Self::Coord; 2];
 
     /// Returns `true` if the given button is currently held down.
-    fn down(&self, button: Self::Button) -> bool;
+    fn down(&self, button: &Self::Button) -> bool;
 
     /// Returns `true` if the given button was pressed this frame.
-    fn pressed(&self, button: Self::Button) -> bool;
+    fn pressed(&self, button: &Self::Button) -> bool;
 
     /// Returns `true` if the given button was released this frame.
-    fn released(&self, button: Self::Button) -> bool;
+    fn released(&self, button: &Self::Button) -> bool;
 
     /// Clears the pressed state of held buttons. Should be called at end of frame.
     fn clear_presses(&mut self) -> &mut Self;
@@ -51,7 +51,7 @@ pub trait MouseInterface {
 #[derive(Debug, Clone)]
 pub struct Mouse<Button, Coord>
 where
-    Button: Copy + PartialEq,
+    Button: Clone + PartialEq,
     Coord: Copy + Default + Add<Output = Coord>,
 {
     position: [Coord; 2],
@@ -62,7 +62,7 @@ where
 
 impl<Button, Coord> Default for Mouse<Button, Coord>
 where
-    Button: Copy + PartialEq,
+    Button: Clone + PartialEq,
     Coord: Copy + Default + Add<Output = Coord>,
 {
     fn default() -> Self {
@@ -72,7 +72,7 @@ where
 
 impl<Button, Coord> Mouse<Button, Coord>
 where
-    Button: Copy + PartialEq,
+    Button: Clone + PartialEq,
     Coord: Copy + Default + Add<Output = Coord>,
 {
     pub fn new() -> Self {
@@ -95,7 +95,7 @@ where
 
 impl<B, C> MouseInterface for Mouse<B, C>
 where
-    B: Copy + PartialEq,
+    B: Clone + PartialEq,
     C: Copy + Default + Add<Output = C>,
 {
     type Button = B;
@@ -105,16 +105,16 @@ where
         self.position
     }
 
-    fn down(&self, button: Self::Button) -> bool {
-        self.buttons_down.iter().any(|&b| b == button)
+    fn down(&self, button: &Self::Button) -> bool {
+        self.buttons_down.iter().any(|b| b == button)
     }
 
-    fn pressed(&self, button: Self::Button) -> bool {
-        self.buttons_pressed.iter().any(|&b| b == button)
+    fn pressed(&self, button: &Self::Button) -> bool {
+        self.buttons_pressed.iter().any(|b| b == button)
     }
 
-    fn released(&self, button: Self::Button) -> bool {
-        self.buttons_released.iter().any(|&b| b == button)
+    fn released(&self, button: &Self::Button) -> bool {
+        self.buttons_released.iter().any(|b| b == button)
     }
 
     fn clear_presses(&mut self) -> &mut Self {
@@ -135,10 +135,10 @@ where
     }
 
     fn press(&mut self, button: Self::Button) -> &mut Self {
-        if !self.down(button) {
-            self.buttons_down.push(button);
+        if !self.down(&button) {
+            self.buttons_down.push(button.clone());
         }
-        if !self.pressed(button) {
+        if !self.pressed(&button) {
             self.buttons_pressed.push(button);
         }
         self
@@ -146,7 +146,7 @@ where
 
     fn release(&mut self, button: Self::Button) -> &mut Self {
         self.buttons_down.retain(|b| b != &button);
-        if !self.released(button) {
+        if !self.released(&button) {
             self.buttons_released.push(button);
         }
         self
@@ -160,9 +160,9 @@ mod tests {
     #[test]
     fn default_mouse_has_no_button_state() {
         let mouse: Mouse<usize, f64> = Mouse::new();
-        assert!(!mouse.down(0));
-        assert!(!mouse.pressed(0));
-        assert!(!mouse.released(0));
+        assert!(!mouse.down(&0));
+        assert!(!mouse.pressed(&0));
+        assert!(!mouse.released(&0));
     }
 
     #[test]
@@ -195,36 +195,36 @@ mod tests {
     fn mouse_button_down_when_pressed() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
         mouse.press(1);
-        assert!(mouse.down(1));
+        assert!(mouse.down(&1));
     }
 
     #[test]
     fn mouse_button_not_down_when_released() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
         mouse.press(1).release(1);
-        assert!(!mouse.down(1));
+        assert!(!mouse.down(&1));
     }
 
     #[test]
     fn mouse_button_pressed_after_pressing() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
         mouse.press(1);
-        assert!(mouse.pressed(1));
+        assert!(mouse.pressed(&1));
     }
 
     #[test]
     fn mouse_button_released_after_releasing() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
         mouse.release(1);
-        assert!(mouse.released(1));
+        assert!(mouse.released(&1));
     }
 
     #[test]
     fn mouse_button_can_be_pressed_and_released_on_same_frame() {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
         mouse.press(1).release(1);
-        assert!(mouse.pressed(1));
-        assert!(mouse.released(1));
+        assert!(mouse.pressed(&1));
+        assert!(mouse.released(&1));
     }
 
     #[test]
@@ -232,7 +232,7 @@ mod tests {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
         mouse.press(1);
         mouse.clear_presses();
-        assert!(!mouse.pressed(1));
+        assert!(!mouse.pressed(&1));
     }
 
     #[test]
@@ -240,7 +240,7 @@ mod tests {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
         mouse.release(1);
         mouse.clear_presses();
-        assert!(!mouse.pressed(1));
+        assert!(!mouse.pressed(&1));
     }
 
     #[test]
@@ -248,6 +248,6 @@ mod tests {
         let mut mouse: Mouse<usize, f64> = Mouse::new();
         mouse.press(1);
         mouse.clear_presses();
-        assert!(mouse.down(1));
+        assert!(mouse.down(&1));
     }
 }

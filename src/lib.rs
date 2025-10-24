@@ -54,7 +54,10 @@
 //! });
 //! ```
 
+/// Parent module for third-party support modules (such as `winit`).
 pub mod support;
+
+/// Prelude that exports traits for supported input device types.
 pub mod prelude {
     pub use crate::keyboard::KeyboardInterface;
     pub use crate::mouse::MouseInterface;
@@ -65,7 +68,8 @@ mod keyboard;
 mod mouse;
 mod touch;
 
-pub use crate::keyboard::{Keyboard, KeyboardInterface};
+// TODO: Should keys/buttons etc. be passed by ref? Probably...
+pub use crate::keyboard::{Keyboard, KeyboardInterface, Modifiers};
 pub use crate::mouse::{Mouse, MouseInterface};
 pub use crate::touch::{Touch, TouchInterface, Touchpad};
 

@@ -70,11 +70,11 @@ mouse position: {:?}
 primary touch: {:?}
 "#,
                     keyboard.modifiers(),
-                    keyboard.pressed(VirtualKeyCode::Space),
-                    keyboard.down(VirtualKeyCode::Space),
-                    keyboard.released(VirtualKeyCode::Space),
+                    keyboard.pressed(&VirtualKeyCode::Space),
+                    keyboard.down(&VirtualKeyCode::Space),
+                    keyboard.released(&VirtualKeyCode::Space),
                     keyboard.text(),
-                    mouse.pressed(MouseButton::Left),
+                    mouse.pressed(&MouseButton::Left),
                     mouse.position(),
                     touch.first_touch(),
                 );
